@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@layer base {
+  @font-face {
+    font-family: 'Open Sans';
+    src: url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+  }
+  
+  @font-face {
+    font-family: 'Lato';
+    src: url('https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap');
+  }
+
+  :root {
+    --primary: #02084b;
+    --secondary: #3E5B99;
+    --text: #2B2D42;
+    --accent: #FFCC00;
+    --background: #F8F8FC;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--background);
+    color: var(--text);
+  }
+
+  h1, h2, h3 {
+    font-family: 'Open Sans', sans-serif;
+    color: var(--primary);
+  }
+
+  .accent-text {
+    font-family: 'Lato', sans-serif;
+    font-weight: 700;
+    color: var(--accent);
+  }
+}

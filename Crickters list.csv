@@ -1,0 +1,312 @@
+﻿cricketer_id,cricket_team,player_name,bowling_style,batting_style,role,role_detail,class_band,base_price,country,ipl_team,ipl_type,player_status,ipl_active,t20_wc_active,odi_wc_active,wpl_active,wodi_wc_active,wt20_wc_active,champions_active
+C101,Afghanistan,Hashmatullah Shahidi,—,Left,Batsman,Batsman,Stone,0,Afghanistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C102,Afghanistan,Fareed Ahmad,Left-arm fast-medium,Right,Bowler,Bowler,Stone,0,Afghanistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C103,Afghanistan,Noor Ahmad,Left-arm wrist spin,Right,Bowler,Bowler,Copper,40,Afghanistan,Chennai Super Kings,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C104,Afghanistan,Ikram Alikhil,—,Left,Wicket Keeper,Wicket Keeper,Stone,0,Afghanistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C105,Afghanistan,Sediqullah Atal,Right-arm offbreak,Left,Batsman,Batsman,Bronze,20,Afghanistan,Delhi Capitals,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C106,Afghanistan,Fazalhaq Farooqi,Left-arm fast-medium,Right,Bowler,Bowler,Bronze,20,Afghanistan,Rajasthan Royals,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C107,Afghanistan,Rahmanullah Gurbaz,—,Right,Wicket Keeper,Wicket Keeper,Bronze,20,Afghanistan,Kolkata Knight Riders,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C108,Afghanistan,Rashid Khan,Right-arm legbreak (googly),Right,All-rounder,All-rounder,Gold,80,Afghanistan,Gujarat Titans,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C109,Afghanistan,Nangialai Kharoti,Left-arm orthodox spin,Left,All-rounder,All-rounder,Stone,0,Afghanistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C110,Afghanistan,Mohammad Nabi,Right-arm offbreak,Right,All-rounder,All-rounder,Stone,0,Afghanistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C111,Afghanistan,Gulbadin Naib,Right-arm medium-fast,Right,All-rounder,All-rounder,Silver,60,Afghanistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C112,Afghanistan,Azmatullah Omarzai,Right-arm medium-fast,Right,All-rounder,All-rounder,Bronze,20,Afghanistan,Punjab Kings,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C113,Afghanistan,Rahmat Shah,Legbreak,Right,Batsman,Batsman,Silver,60,Afghanistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C114,Afghanistan,Ibrahim Zadran,Right-arm medium-fast,Right,Batsman,Batsman,Stone,0,Afghanistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C115,Afghanistan,Naveed Zadran,Left-arm fast-medium,Right,Bowler,Bowler,Stone,0,Afghanistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C116,Afghanistan,Mujeeb-ur-Rahman,Right-arm offbreak,Right,Bowler,Bowler,Bronze,20,Afghanistan,Mumbai Indians,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C117,Afghanistan,Karim Janat,Right-arm medium-fast,Right,All-rounder,All-rounder,Bronze,20,Afghanistan,Gujarat Titans,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C201,Australia,Steve Smith,Right-arm legbreak,Right,Batsman,Batsman,Stone,0,Australia,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C202,Australia,Sean Abbott,Right-arm medium-fast,Right,All-rounder,All-rounder,Stone,0,Australia,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C203,Australia,Alex Carey,—,Left,Wicket Keeper,Wicket Keeper,Silver,60,Australia,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C204,Australia,Ben Dwarshuis,Left-arm fast-medium,Left,Bowler,Bowler,Stone,0,Australia,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C205,Australia,Nathan Ellis,Right-arm fast-medium,Right,Bowler,Bowler,Bronze,20,Australia,Chennai Super Kings,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C206,Australia,Jake Fraser-McGurk,—,Right,Batsman,Batsman,Copper,40,Australia,Delhi Capitals,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C207,Australia,Aaron Hardie,Right-arm medium-fast,Right,All-rounder,All-rounder,Bronze,20,Australia,Punjab Kings,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C208,Australia,Travis Head,Right-arm offbreak,Left,Batsman,Batsman,Gold,80,Australia,Sunrisers Hyderabad,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C209,Australia,Josh Inglis,—,Right,Wicket Keeper,Wicket Keeper,Copper,40,Australia,Punjab Kings,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C210,Australia,Spencer Johnson,Left-arm fast,Left,Bowler,Bowler,Bronze,20,Australia,Kolkata Knight Riders,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C211,Australia,Marnus Labuschagne,Legbreak,Right,Batsman,Batsman,Stone,0,Australia,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C212,Australia,Glenn Maxwell,Right-arm offbreak,Right,All-rounder,All-rounder,Gold,80,Australia,Punjab Kings,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C213,Australia,Tanveer Sangha,Right-arm legbreak,Right,Bowler,Bowler,Silver,60,Australia,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C214,Australia,Matthew Short,Right-arm offbreak,Right,All-rounder,All-rounder,Stone,0,Australia,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C215,Australia,Adam Zampa,Right-arm legbreak,Right,Bowler,Bowler,Copper,40,Australia,Sunrisers Hyderabad,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C216,Australia,Pat Cummins,Right-arm fast,Right,All-rounder,All-rounder / Bowling,Platinum,100,Australia,Sunrisers Hyderabad,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C217,Australia,Josh Hazlewood,Right-arm fast-medium,Right,Bowler,Bowler,Gold,80,Australia,Royal Challengers Bengaluru,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C218,Australia,Mitchell Starc,Left-arm fast,Left,Bowler,Bowler,Gold,80,Australia,Delhi Capitals,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C219,Australia,Marcus Stoinis,Right-arm fast-medium,Right,All-rounder,All-rounder,Gold,80,Australia,Punjab Kings,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C220,Australia,Mitchell Marsh,Right-arm medium-fast,Right,All-rounder,All-rounder,Copper,40,Australia,Lucknow Super Giants,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C221,Australia,Tim David,Right-arm offbreak,Right,Batsman,Batsman,Copper,40,Australia,Royal Challengers Bengaluru,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C222,Australia,Xavier Bartlett,Right-arm fast-medium,Right,Bowler,Bowler / Fast,Bronze,20,Australia,Punjab Kings,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C223,Australia,Mitch Owen,Right-arm medium-fast,Right,All-rounder,All-rounder,Bronze,20,Australia,Punjab Kings,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C301,Bangladesh,Najmul Hossain Shanto,Right-arm offbreak,Left,Batsman,Batsman,Stone,0,Bangladesh,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C302,Bangladesh,Nasum Ahmed,Slow left-arm orthodox,Left,Bowler,Bowler,Stone,0,Bangladesh,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C303,Bangladesh,Taskin Ahmed,Right-arm fast,Left,Bowler,Bowler,Stone,0,Bangladesh,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C304,Bangladesh,Jaker Ali,—,Right,Wicket Keeper,Wicket Keeper,Stone,0,Bangladesh,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C305,Bangladesh,Parvez Hossain Emon,—,Left,Wicket Keeper,Wicket Keeper,Stone,0,Bangladesh,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C306,Bangladesh,Tanzid Hasan,—,Left,Batsman,Batsman,Stone,0,Bangladesh,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C307,Bangladesh,Rishad Hossain,Legbreak,Right,All-rounder,All-rounder,Stone,0,Bangladesh,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C308,Bangladesh,Towhid Hridoy,Right-arm offbreak,Right,Batsman,Batsman,Silver,60,Bangladesh,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C309,Bangladesh,Mahmudullah,Right-arm offbreak,Right,All-rounder,All-rounder,Stone,0,Bangladesh,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C310,Bangladesh,Mehidy Hasan Miraz,Right-arm offbreak,Right,All-rounder,All-rounder,Silver,60,Bangladesh,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C311,Bangladesh,Mushfiqur Rahim,—,Right,Wicket Keeper,Wicket Keeper,Silver,60,Bangladesh,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C312,Bangladesh,Mustafizur Rahman,Left-arm fast-medium,Left,Bowler,Bowler,Bronze,20,Bangladesh,Delhi Capitals,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C313,Bangladesh,Nahid Rana,Right-arm fast,Right,Bowler,Bowler,Stone,0,Bangladesh,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C314,Bangladesh,Tanzim Hasan Sakib,Right-arm medium-fast,Right,Bowler,Bowler,Stone,0,Bangladesh,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C315,Bangladesh,Soumya Sarkar,Right-arm medium,Left,All-rounder,All-rounder,Silver,60,Bangladesh,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C401,England,Jos Buttler,—,Right,Wicket Keeper,Wicket Keeper / Batsman,Gold,80,England,Gujarat Titans,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C402,England,Jofra Archer,Right-arm fast,Right,Bowler,Bowler,Gold,80,England,Rajasthan Royals,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C403,England,Gus Atkinson,Right-arm fast,Right,Bowler,Bowler,Stone,0,England,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C404,England,Tom Banton,—,Right,Batsman,Batsman,Stone,0,England,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C405,England,Harry Brook,Right-arm medium,Right,Batsman,Batsman,Stone,0,England,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C406,England,Brydon Carse,Right-arm fast-medium,Right,All-rounder,All-rounder,Stone,0,England,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C407,England,Ben Duckett,—,Left,Batsman,Batsman,Silver,60,England,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C408,England,Liam Livingstone,Right-arm legbreak / offbreak,Right,All-rounder,All-rounder,Copper,40,England,Royal Challengers Bengaluru,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C409,England,Saqib Mahmood,Right-arm fast-medium,Right,Bowler,Bowler,Stone,0,England,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C410,England,Jamie Overton,Right-arm fast,Right,All-rounder,All-rounder,Bronze,20,England,Chennai Super Kings,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C411,England,Adil Rashid,Right-arm legbreak,Right,Bowler,Bowler,Stone,0,England,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C412,England,Joe Root,Right-arm offbreak,Right,Batsman,Batsman,Stone,0,England,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C413,England,Phil Salt,—,Right,Wicket Keeper,Wicket Keeper / Batsman,Gold,80,England,Royal Challengers Bengaluru,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C414,England,Jamie Smith,—,Right,Wicket Keeper,Wicket Keeper / Batsman,Stone,0,England,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C415,England,Mark Wood,Right-arm fast,Right,Bowler,Bowler,Stone,0,England,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C416,England,Will Jacks,Right-arm off-break,Right,All-rounder,All-rounder / Batting,Copper,40,England,Mumbai Indians,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C417,England,Jacob Bethell,Left-arm orthodox spin,Left,All-rounder,All-rounder,Bronze,20,England,Royal Challengers Bengaluru,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C418,England,Sam Curran,Left-arm medium-fast,Left,All-rounder,All-rounder / Bowling,Copper,40,England,Chennai Super Kings,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C419,England,Moeen Ali,Right-arm offbreak,Left,All-rounder,All-rounder,Bronze,20,England,Kolkata Knight Riders,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C420,England,Reece Topley,Left-arm fast-medium,Right,Bowler,Bowler / Fast,Bronze,20,England,Mumbai Indians,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C421,England,Jonny Bairstow,—,Right,Wicket Keeper,Wicket Keeper,Bronze,20,England,Mumbai Indians,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C422,England,Richard Gleeson,Right-arm fast-medium,Right,Bowler,Bowler / Fast,Bronze,20,England,Mumbai Indians,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C501,India,Rohit Sharma,Right-arm offbreak,Right,Batsman,Batsman,Gold,80,India,Mumbai Indians,Indian,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C502,India,Shubman Gill,—,Right,Batsman,Batsman,Platinum,100,India,Gujarat Titans,Indian,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C503,India,Varun Chakravarthy,Right-arm legbreak (mystery spin),Right,Bowler,Bowler,Stone,0,India,Non IPL Player,Indian,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C504,India,Shreyas Iyer,Right-arm legbreak,Right,Batsman,Batsman,Platinum,100,India,Punjab Kings,Indian,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C505,India,Ravindra Jadeja,Left-arm orthodox,Left,All-rounder,All-rounder,Gold,80,India,Chennai Super Kings,Indian,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C506,India,Virat Kohli,Right-arm medium,Right,Batsman,Batsman,Gold,80,India,Royal Challengers Bengaluru,Indian,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C507,India,Hardik Pandya,Right-arm medium-fast,Right,All-rounder,All-rounder,Platinum,100,India,Mumbai Indians,Indian,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C508,India,Rishabh Pant,—,Left,Wicket Keeper,Wicket Keeper / Batsman,Platinum,100,India,Lucknow Super Giants,Indian,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C509,India,Axar Patel,Slow left-arm orthodox,Left,All-rounder,All-rounder,Platinum,100,India,Delhi Capitals,Indian,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C510,India,KL Rahul,—,Right,Wicket Keeper,Wicket Keeper / Batsman,Gold,80,India,Delhi Capitals,Indian,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C511,India,Harshit Rana,Right-arm fast,Right,Bowler,Bowler,Copper,40,India,Kolkata Knight Riders,Indian,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C512,India,Mohammed Shami,Right-arm fast,Right,Bowler,Bowler,Stone,0,India,Non IPL Player,Indian,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C513,India,Arshdeep Singh,Left-arm medium-fast,Left,Bowler,Bowler,Gold,80,India,Punjab Kings,Indian,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C514,India,Washington Sundar,Right-arm offbreak,Left,All-rounder,All-rounder,Copper,40,India,Gujarat Titans,Indian,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C515,India,Kuldeep Yadav,Left-arm wrist spin,Left,Bowler,Bowler,Gold,80,India,Delhi Capitals,Indian,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C516,India,Ruturaj Gaikwad,Right-arm offbreak,Right,Batsman,Batsman,Platinum,100,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C517,India,Sanju Samson,—,Right,Wicket Keeper,Wicket Keeper,Platinum,100,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C518,India,Rajat Patidar,—,Right,Batsman,Batsman,Gold,80,India,Royal Challengers Bengaluru,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C519,India,Ajinkya Rahane,—,Right,Batsman,Batsman,Gold,80,India,Kolkata Knight Riders,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C520,India,Venkatesh Iyer,Right-arm medium,Left,All-rounder,All-rounder,Gold,80,India,Kolkata Knight Riders,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C521,India,Yashasvi Jaiswal,Right-arm legbreak,Left,Batsman,Batsman,Gold,80,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C522,India,Jasprit Bumrah,Right-arm fast,Right,Bowler,Bowler,Gold,80,India,Mumbai Indians,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C523,India,Yuzvendra Chahal,Right-arm legbreak,Right,Bowler,Bowler,Gold,80,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C524,India,Suryakumar Yadav,Right-arm medium,Right,Batsman,Batsman,Gold,80,India,Mumbai Indians,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C525,India,Dhruv Jurel,—,Right,Wicket Keeper,Wicket Keeper,Copper,40,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C526,India,Abhishek Sharma,Slow left-arm orthodox,Left,All-rounder,All-rounder,Gold,80,India,Sunrisers Hyderabad,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C527,India,Shimron Hetmyer,Left-arm orthodox,Left,Batsman,Batsman,Gold,80,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C528,India,Varun Chakaravarthy,Right-arm legbreak,Right,Bowler,Bowler,Gold,80,India,Kolkata Knight Riders,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C529,India,Shivam Dube,Right-arm medium,Left,All-rounder,All-rounder,Gold,80,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C530,India,Ravi Bishnoi,Right-arm legbreak,Right,Bowler,Bowler,Gold,80,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C531,India,Ishan Kishan,—,Left,Wicket Keeper,Wicket Keeper,Gold,80,India,Sunrisers Hyderabad,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C532,India,Riyan Parag,Right-arm legbreak,Right,All-rounder,All-rounder,Gold,80,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C533,India,Jitesh Sharma,—,Right,Wicket Keeper,Wicket Keeper,Copper,40,India,Royal Challengers Bengaluru,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C534,India,Bhuvneshwar Kumar,Right-arm medium-fast,Right,Bowler,Bowler,Gold,80,India,Royal Challengers Bengaluru,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C535,India,Deepak Chahar,Right-arm medium-fast,Right,Bowler,Bowler,Gold,80,India,Mumbai Indians,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C536,India,Rinku Singh,Right-arm offbreak,Left,Batsman,Batsman,Copper,40,India,Kolkata Knight Riders,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C537,India,Mohammad Siraj,Right-arm fast,Right,Bowler,Bowler,Copper,40,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C538,India,Prasidh Krishna,Right-arm fast-medium,Right,Bowler,Bowler,Copper,40,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C539,India,T Natarajan,Left-arm medium-fast,Left,Bowler,Bowler,Copper,40,India,Delhi Capitals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C540,India,Avesh Khan,Right-arm fast-medium,Right,Bowler,Bowler,Copper,40,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C541,India,Mukesh Kumar,Right-arm medium-fast,Right,Bowler,Bowler,Copper,40,India,Delhi Capitals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C542,India,Sai Sudharsan,Slow left-arm orthodox,Left,Batsman,Batsman,Copper,40,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C543,India,Ravichandran Ashwin,Right-arm offbreak,Right,All-rounder,All-rounder / Bowling,Copper,40,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C544,India,Tilak Varma,Right-arm offbreak,Left,All-rounder,All-rounder,Copper,40,India,Mumbai Indians,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C545,India,Akash Deep,Right-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C546,India,Harshal Patel,Right-arm medium-fast,Right,All-rounder,All-rounder / Bowling,Copper,40,India,Sunrisers Hyderabad,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C547,India,Tushar Deshpande,Right-arm medium-fast,Right,Bowler,Bowler,Copper,40,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C548,India,Yash Dayal,Left-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Royal Challengers Bengaluru,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C549,India,Nitish Kumar Reddy,Right-arm medium-fast,Right,All-rounder,All-rounder,Copper,40,India,Sunrisers Hyderabad,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C550,India,Krunal Pandya,Slow left-arm orthodox,Left,All-rounder,All-rounder,Copper,40,India,Royal Challengers Bengaluru,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C551,India,Syed Khaleel Ahmed,Left-arm medium-fast,Right,Bowler,Bowler,Copper,40,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C552,India,Shardul Thakur,Right-arm medium-fast,Right,All-rounder,All-rounder / Bowling,Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C553,India,Shashank Singh,Right-arm medium,Right,All-rounder,All-rounder,Copper,40,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C554,India,Naman Dhir,Right-arm medium,Right,Batsman,Batsman,Copper,40,India,Mumbai Indians,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C555,India,Abdul Samad,Right-arm legbreak,Right,Batsman,Batsman,Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C556,India,Nehal Wadhera,Slow left-arm orthodox,Left,Batsman,Batsman,Bronze,20,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C557,India,Abishek Porel,—,Left,Wicket Keeper,Wicket Keeper,Copper,40,India,Delhi Capitals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C558,India,Prabhsimran Singh,—,Right,Wicket Keeper,Wicket Keeper,Copper,40,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C559,India,Nitish Rana,Right-arm offbreak,Left,All-rounder,All-rounder,Copper,40,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C560,India,Rahul Tewatia,Right-arm legbreak,Left,All-rounder,All-rounder,Copper,40,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C561,India,Ramandeep Singh,Right-arm medium,Right,All-rounder,All-rounder,Copper,40,India,Kolkata Knight Riders,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C562,India,Ayush Badoni,Right-arm offbreak,Right,Batsman,Batsman,Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C563,India,Sandeep Sharma,Right-arm medium,Right,Bowler,Bowler,Copper,40,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C564,India,Rahul Chahar,Right-arm legbreak,Right,Bowler,Bowler,Copper,40,India,Sunrisers Hyderabad,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C565,India,Ashutosh Sharma,Right-arm (unknown style),Right,All-rounder,All-rounder / Batting,Bronze,20,India,Delhi Capitals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C566,India,Rahul Tripathi,—,Right,Batsman,Batsman,Copper,40,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C567,India,Abhinav Manohar,—,Right,Batsman,Batsman,Copper,40,India,Sunrisers Hyderabad,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C568,India,Angkrish Raghuvanshi,Right-arm legbreak,Left,Batsman,Batsman,Copper,40,India,Kolkata Knight Riders,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C569,India,Deepak Hooda,Right-arm offbreak,Right,All-rounder,All-rounder,Bronze,20,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C570,India,Harpreet Brar,Slow left-arm orthodox,Left,All-rounder,All-rounder / Bowling,Bronze,20,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C571,India,MS Dhoni,—,Right,Wicket Keeper,Wicket Keeper,Copper,40,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C572,India,Rasikh Dar,Right-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Royal Challengers Bengaluru,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C573,India,Shahrukh Khan,Right-arm offbreak,Right,Batsman,Batsman,Bronze,20,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C574,India,Mayank Yadav,Right-arm fast,Right,Bowler,Bowler,Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C575,India,Priyansh Arya,Right-arm off-break bowler,Left,Batsman,Batsman / Opening,Bronze,20,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C576,India,Anshul Kamboj,Right-arm medium,Right,Bowler,Bowler,Bronze,20,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C577,India,Shahbaz Ahmed,Slow left-arm orthodox,Left,All-rounder,All-rounder,Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C578,India,Suyash Sharma,Right-arm legbreak,Right,Bowler,Bowler,Bronze,20,India,Royal Challengers Bengaluru,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C579,India,Gurjapneet Singh,Left-arm medium fast,Right,Bowler,Bowler,Bronze,20,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C580,India,Mohit Sharma,Right-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Delhi Capitals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C581,India,R Sai Kishore,Slow left-arm orthodox,Left,Bowler,Bowler,Bronze,20,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C582,India,Devdutt Padikkal,—,Left,Batsman,Batsman,Bronze,20,India,Royal Challengers Bengaluru,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C583,India,Mahipal Lomror,Slow left-arm orthodox,Left,All-rounder,All-rounder,Bronze,20,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C584,India,Arshad Khan,Left-arm medium-fast,Left,All-rounder,All-rounder / Bowling,Bronze,20,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C585,India,Vijay Shankar,Right-arm medium,Right,All-rounder,All-rounder,Bronze,20,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C586,India,Vaibhav Arora,Right-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Kolkata Knight Riders,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C587,India,Vijaykumar Vyshak,Right-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C588,India,Yash Thakur,Right-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C589,India,Simarjeet Singh,Right-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Sunrisers Hyderabad,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C590,India,Gurnoor Brar,Right-arm fast,Left,Bowler,Bowler,Bronze,20,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C591,India,Akash Madhwal,Right-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C592,India,Vaibhav Suryavanshi,Slow left-arm orthodox,Left,Batsman,Batsman / Opening,Bronze,20,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C593,India,Jaydev Unadkat,Left-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Sunrisers Hyderabad,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C594,India,Vishnu Vinod,—,Right,Wicket Keeper,Wicket Keeper,Bronze,20,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C595,India,Sameer Rizvi,Right-arm offbreak,Right,Batsman,Batsman,Bronze,20,India,Delhi Capitals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C596,India,Shubham Dubey,—,Left,Batsman,Batsman,Bronze,20,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C597,India,Kuldeep Sen,Right-arm fast,Right,Bowler,Bowler,Bronze,20,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C598,India,Manish Pandey,—,Right,Batsman,Batsman,Bronze,20,India,Kolkata Knight Riders,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C599,India,Jayant Yadav,Right-arm offbreak,Right,All-rounder,All-rounder / Bowling,Bronze,20,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C600,India,Ishant Sharma,Right-arm fast-medium,Right,Bowler,Bowler,Bronze,20,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C601,India,Chetan Sakariya,Left-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Kolkata Knight Riders,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C602,India,M Siddharth,Slow left-arm orthodox,Right,Bowler,Bowler,Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C603,India,Kumar Kushagra,—,Right,Wicket Keeper,Wicket Keeper,Bronze,20,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C604,India,Robin Minz,—,Left,Wicket Keeper,Wicket Keeper,Bronze,20,India,Mumbai Indians,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C605,India,Vansh Bedi,Right-arm off break ,Right,Wicket Keeper,Wicket Keeper / Batsman,Bronze,20,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C606,India,Karun Nair,—,Right,Batsman,Batsman,Bronze,20,India,Delhi Capitals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C607,India,Vipraj Nigam,Leg-break,Right,All-rounder,All-rounder,Bronze,20,India,Delhi Capitals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C608,India,Swapnil Singh,Slow left-arm orthodox,Left,All-rounder,All-rounder,Bronze,20,India,Royal Challengers Bengaluru,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C609,India,Karn Sharma,Right-arm legbreak,Left,All-rounder,All-rounder / Bowling,Bronze,20,India,Mumbai Indians,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C610,India,Madhav Tiwari,Right-arm medium fast,Right,All-rounder,All-rounder,Bronze,20,India,Delhi Capitals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C611,India,Anukul Roy,Slow left-arm orthodox,Left,All-rounder,All-rounder,Bronze,20,India,Kolkata Knight Riders,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C612,India,Zeeshan Ansari,Leg-break googly bowler,Right,Bowler,Bowler,Bronze,20,India,Sunrisers Hyderabad,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C613,India,Yudhvir Charak,Right-arm medium-fast,Right,All-rounder,All-rounder / Bowling,Bronze,20,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C614,India,Shaik Rasheed,—,Right,Batsman,Batsman,Bronze,20,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C615,India,C Andre Siddarth,Off spin,Right,Batsman,Batsman,Bronze,20,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C616,India,Himmat Singh,Right-arm offbreak,Right,Batsman,Batsman,Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C617,India,Harnoor Pannu,Leg-break ,Left,Batsman,Batsman,Bronze,20,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C618,India,Pyla Avinash,Right-arm medium fast ,Right,Batsman,Batsman,Bronze,20,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C619,India,Swastik Chikara,—,Right,Batsman,Batsman,Bronze,20,India,Royal Challengers Bengaluru,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C620,India,Atharva Taide,Slow left-arm orthodox,Left,All-rounder,All-rounder,Bronze,20,India,Sunrisers Hyderabad,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C621,India,Aniket Verma,Right-arm medium-fast bowler,Right,All-rounder,All-rounder,Bronze,20,India,Sunrisers Hyderabad,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C622,India,Sachin Baby,Right-arm offbreak,Left,Batsman,Batsman,Bronze,20,India,Sunrisers Hyderabad,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C623,India,Anuj Rawat,—,Left,Wicket Keeper,Wicket Keeper,Bronze,20,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C624,India,Luvnith Sisodia,—,Left,Wicket Keeper,Wicket Keeper,Bronze,20,India,Kolkata Knight Riders,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C625,India,Aryan Juyal,—,Right,Wicket Keeper,Wicket Keeper,Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C626,India,Shrijith Krishnan,Off break,Left,Wicket Keeper,Wicket Keeper,Bronze,20,India,Mumbai Indians,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C627,India,Kunal Singh Rathore,—,Left,Wicket Keeper,Wicket Keeper,Bronze,20,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C628,India,Ramakrishna Ghosh,Right-arm medium fast,Right,All-rounder,All-rounder / Bowling,Bronze,20,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C629,India,Kamlesh Nagarkoti,Right-arm fast,Right,Bowler,Bowler,Bronze,20,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C630,India,Darshan Nalkande,Right-arm medium-fast,Right,All-rounder,All-rounder / Bowling,Bronze,20,India,Delhi Capitals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C631,India,Ajay Mandal,Slow left-arm orthodox,Left,All-rounder,All-rounder,Bronze,20,India,Delhi Capitals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C632,India,Manvanth Kumar,Right-arm fast medium,Left,All-rounder,All-rounder,Bronze,20,India,Delhi Capitals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C633,India,Tripurana Vijay,Off spin,Right,All-rounder,All-rounder,Bronze,20,India,Delhi Capitals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C634,India,Nishant Sindhu,Slow left-arm orthodox,Left,All-rounder,All-rounder,Bronze,20,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C635,India,Yuvraj Chaudhary,Left-arm orthodox spin,Left,All-rounder,All-rounder,Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C636,India,Rajvardhan Hangargekar,Right-arm fast-medium,Right,All-rounder,All-rounder / Bowling,Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C637,India,Arshin Kulkarni,Right-arm medium,Right,All-rounder,All-rounder,Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C638,India,Raj Bawa,Right-arm medium-fast,Left,All-rounder,All-rounder,Bronze,20,India,Mumbai Indians,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C639,India,Vignesh Puthur,Left-arm wrist-spinner,Right,All-rounder,All-rounder,Bronze,20,India,Mumbai Indians,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C640,India,Suryash Shedge,Right-arm medium pacer,Right,All-rounder,All-rounder,Bronze,20,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C641,India,Musheer Khan,Slow left-arm orthodox,Left,All-rounder,All-rounder,Bronze,20,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C642,India,Manoj Bhandage,Right-arm medium,Left,All-rounder,All-rounder,Bronze,20,India,Royal Challengers Bengaluru,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C643,India,Mukesh Choudhary,Left-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C644,India,Shreyas Gopal,Right-arm legbreak,Right,All-rounder,All-rounder / Bowling,Bronze,20,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C645,India,Manav Suthar,Slow left-arm orthodox,Left,All-rounder,All-rounder / Bowling,Bronze,20,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C646,India,Kulwant Khejroliya,Left-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Gujarat Titans,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C647,India,Mayank Markande,Right-arm legbreak,Right,Bowler,Bowler,Bronze,20,India,Kolkata Knight Riders,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C648,India,Digvesh Singh,Right-arm off-spin/leg-spin,Right,Bowler,Bowler / Spinner (Mystery / Lower Batsman),Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C649,India,Akash Singh,Left-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C650,India,Prince Yadav,Right-arm fast,Right,Bowler,Bowler / Fast,Bronze,20,India,Lucknow Super Giants,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C651,India,Ashwani Kumar,Left-arm fast-medium (bowls yorkers and slower balls around 135 kph),Left,Bowler,Bowler / Fast,Bronze,20,India,Mumbai Indians,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C652,India,Satyanarayana Raju,Right-arm medium-fast,Right,Bowler,Bowler / Fast,Bronze,20,India,Mumbai Indians,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C653,India,Arjun Tendulkar,Left-arm medium-fast,Left,All-rounder,All-rounder / Bowling,Bronze,20,India,Mumbai Indians,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C654,India,Praveen Dubey,Right-arm legbreak,Right,Bowler,Bowler,Bronze,20,India,Punjab Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C655,India,Kumar Kartikeya Singh,Slow left-arm orthodox,Right,Bowler,Bowler,Bronze,20,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C656,India,Ashok Sharma,Right-arm medium-fast,Right,Bowler,Bowler,Bronze,20,India,Rajasthan Royals,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C657,India,Mohit Rathee,Right-arm legbreak,Right,All-rounder,All-rounder,Bronze,20,India,Royal Challengers Bengaluru,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C658,India,Abhinandan Singh,"Right-arm medium-fast (swing bowler, maintains good line and length)",Right,Bowler,Bowler / Fast,Bronze,20,India,Royal Challengers Bengaluru,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C659,India,Ayush Mhatre,Right-arm off-spin,Right,Batsman,Batsman / Opening,Bronze,20,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C660,India,Harsh Dubey,Slow left-arm orthodox,Left,All-rounder,All-rounder,Bronze,20,India,Sunrisers Hyderabad,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C661,India,Mayank Agarawal,—,Right,Batsman,Batsman,Bronze,20,India,Royal Challengers Bengaluru,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C662,India,Urvil Patel,—,Right,Wicket Keeper,Wicket Keeper,Bronze,20,India,Chennai Super Kings,Indian,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C601,New Zealand,Mitchell Santner,Slow left-arm orthodox,Left,All-rounder,All-rounder,Bronze,20,New Zealand,Mumbai Indians,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C602,New Zealand,Michael Bracewell,Right-arm offbreak,Left,All-rounder,All-rounder,Stone,0,New Zealand,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C603,New Zealand,Mark Chapman,Slow left-arm orthodox,Left,All-rounder,All-rounder,Stone,0,New Zealand,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C604,New Zealand,Devon Conway,—,Left,Wicket Keeper,Wicket Keeper / Batsman,Copper,40,New Zealand,Chennai Super Kings,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C605,New Zealand,Jacob Duffy,Right-arm medium-fast,Right,Bowler,Bowler,Stone,0,New Zealand,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C606,New Zealand,Lockie Ferguson,Right-arm fast,Right,Bowler,Bowler,Copper,40,New Zealand,Punjab Kings,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C607,New Zealand,Matt Henry,Right-arm fast-medium,Right,Bowler,Bowler,Stone,0,New Zealand,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C608,New Zealand,Tom Latham,—,Left,Wicket Keeper,Wicket Keeper / Batsman,Stone,0,New Zealand,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C609,New Zealand,Daryl Mitchell,Right-arm medium-fast,Right,All-rounder,All-rounder,Silver,60,New Zealand,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C610,New Zealand,William O'Rourke,Right-arm fast,Right,Bowler,Bowler,Stone,0,New Zealand,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C611,New Zealand,Glenn Phillips,Right-arm offbreak,Right,All-rounder,All-rounder / Bating (Bowler & Wicket Keeper),Copper,40,New Zealand,Gujarat Titans,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C612,New Zealand,Rachin Ravindra,Slow left-arm orthodox,Left,All-rounder,All-rounder,Copper,40,New Zealand,Chennai Super Kings,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C613,New Zealand,Nathan Smith,Right-arm fast-medium,Right,Bowler,Bowler,Stone,0,New Zealand,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C614,New Zealand,Kane Williamson,Right-arm offbreak,Right,Batsman,Batsman,Stone,0,New Zealand,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C615,New Zealand,Will Young,Right-arm offbreak,Right,Batsman,Batsman,Stone,0,New Zealand,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C616,New Zealand,Trent Boult,Left-arm fast-medium,Right,Bowler,Bowler,Gold,80,New Zealand,Mumbai Indians,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C617,New Zealand,William O'Rourkee,Right-arm fast-medium,Right,Bowler,Bowler / Fast,Bronze,20,New Zealand,Lucknow Super Giants,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C618,New Zealand,Kylie Jamieson,Right-arm fast-medium,Right,All-rounder,All-rounder / Bowling,Bronze,20,New Zealand,Punjab Kings,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C701,Pakistan,Mohammad Rizwan,—,Right,Wicket Keeper,Wicket Keeper / Batsman,Stone,0,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C702,Pakistan,Salman Ali Agha,Right-arm offbreak,Right,All-rounder,All-rounder,Silver,60,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C703,Pakistan,Shaheen Afridi,Left-arm fast,Left,Bowler,Bowler,Silver,60,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C704,Pakistan,Abrar Ahmed,Legbreak,Right,Bowler,Bowler,Stone,0,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C705,Pakistan,Faheem Ashraf,Right-arm medium-fast,Left,All-rounder,All-rounder,Stone,0,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C706,Pakistan,Babar Azam,Right-arm offbreak,Right,Batsman,Batsman,Stone,0,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C707,Pakistan,Kamran Ghulam,Right-arm offbreak,Right,Batsman,Batsman,Silver,60,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C708,Pakistan,Mohammad Hasnain,Right-arm fast,Right,Bowler,Bowler,Stone,0,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C709,Pakistan,Usman Khan,Right-arm medium,Right,Batsman,Batsman,Silver,60,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C710,Pakistan,Haris Rauf,Right-arm fast,Right,Bowler,Bowler,Silver,60,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C711,Pakistan,Khushdil Shah,Slow left-arm orthodox,Left,All-rounder,All-rounder,Stone,0,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C712,Pakistan,Naseem Shah,Right-arm fast,Right,Bowler,Bowler,Stone,0,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C713,Pakistan,Saud Shakeel,—,Left,Batsman,Batsman,Stone,0,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C714,Pakistan,Tayyab Tahir,—,Right,Batsman,Batsman,Stone,0,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C715,Pakistan,Fakhar Zaman,Left-arm orthodox,Left,Batsman,Batsman,Stone,0,Pakistan,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C801,South Africa,Temba Bavuma,—,Right,Batsman,Batsman,Stone,0,South Africa,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C802,South Africa,Corbin Bosch,Right-arm medium-fast,Right,All-rounder,All-rounder,Bronze,20,South Africa,Mumbai Indians,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C803,South Africa,Tony de Zorzi,—,Left,Batsman,Batsman,Stone,0,South Africa,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C804,South Africa,Marco Jansen,Left-arm fast-medium,Right,All-rounder,All-rounder,Copper,40,South Africa,Punjab Kings,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C805,South Africa,Heinrich Klaasen,—,Right,Wicket Keeper,Wicket Keeper / Batsman,Gold,80,South Africa,Sunrisers Hyderabad,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C806,South Africa,Keshav Maharaj,Slow left-arm orthodox,Right,Bowler,Bowler,Stone,0,South Africa,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C807,South Africa,Aiden Markram,Right-arm offbreak,Right,All-rounder,All-rounder,Copper,40,South Africa,Lucknow Super Giants,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C808,South Africa,David Miller,—,Left,Batsman,Batsman,Copper,40,South Africa,Lucknow Super Giants,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C809,South Africa,Wiaan Mulder,Right-arm medium-fast,Right,All-rounder,All-rounder,Bronze,20,South Africa,Sunrisers Hyderabad,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C810,South Africa,Lungi Ngidi,Right-arm fast-medium,Right,Bowler,Bowler,Bronze,20,South Africa,Royal Challengers Bengaluru,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C811,South Africa,Kagiso Rabada,Right-arm fast,Left,Bowler,Bowler,Gold,80,South Africa,Gujarat Titans,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C812,South Africa,Ryan Rickelton,—,Left,Wicket Keeper,Wicket Keeper / Batsman,Copper,40,South Africa,Mumbai Indians,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C813,South Africa,Tabraiz Shamsi,Left-arm wrist spin,Right,Bowler,Bowler,Stone,0,South Africa,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C814,South Africa,Tristan Stubbs,Right-arm offbreak,Right,All-rounder,All-rounder,Gold,80,South Africa,Delhi Capitals,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C815,South Africa,Rassie van der Dussen,Right-arm legbreak,Right,Batsman,Batsman,Stone,0,South Africa,Non IPL Player,Overseas,Active,FALSE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C816,South Africa,Quinton de Kock,—,Left,Wicket Keeper,Wicket Keeper,Gold,80,South Africa,Kolkata Knight Riders,Overseas,Active,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,TRUE
+C817,South Africa,Anrich Nortje,Right-arm fast,Right,Bowler,Bowler / Fast,Bronze,20,South Africa,Kolkata Knight Riders,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C818,South Africa,Faf du Plessis,Right-arm legbreak,Right,Batsman,Batsman,Copper,40,South Africa,Delhi Capitals,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C819,South Africa,Gerald Coetzee,Right-arm fast,Right,Bowler,Bowler / Fast,Bronze,20,South Africa,Gujarat Titans,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C820,South Africa,Matthew Breetzke,—,Right,Batsman,Batsman / Top-order,Bronze,20,South Africa,Lucknow Super Giants,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C821,South Africa,Donovan Ferreira,Right-arm off-spin (part-time),Right,All-rounder,All-rounder / Batting (Finisher),Bronze,20,South Africa,Delhi Capitals,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C822,South Africa,Kwena Maphaka,Left-arm fast,Right,Bowler,Bowler / Fast,Bronze,20,South Africa,Rajasthan Royals,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C823,South Africa,Dewald Brevis,Leg-break,Right,All-rounder,All-rounder / Batting (mainly Batsman),Bronze,20,South Africa,Chennai Super Kings,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C901,Srilanka,Matheesha Pathirana,Right-arm fast,Right,Bowler,Bowler,Gold,80,Srilanka,Chennai Super Kings,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C902,Srilanka,Wanindu Hasaranga,Right-arm legbreak,Right,All-rounder,All-rounder / Bowling,Copper,40,Srilanka,Rajasthan Royals,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C903,Srilanka,Mahesh Theekshana,Right-arm offbreak,Right,Bowler,Bowler,Bronze,20,Srilanka,Rajasthan Royals,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C904,Srilanka,Nuwan Thushara,Right-arm slingy fast (Malinga-action),Right,Bowler,Bowler / Fast,Bronze,20,Srilanka,Royal Challengers Bengaluru,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C905,Srilanka,Eshan Malinga,Right-arm medium-fast,Right,All-rounder,All-rounder / Fast Bowler,Silver,60,Srilanka,Sunrisers Hyderabad,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C906,Srilanka,Kamindu Mendis,Right-arm offbreak / Slow left-arm orthodox,Left,All-rounder,All-rounder,Bronze,20,Srilanka,Sunrisers Hyderabad,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C907,Srilanka,Dushmantha Chameera ,Right-arm fast,Right,Bowler,Bowler / Fast,Bronze,20,Srilanka,Delhi Capitals,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C908,Srilanka,Kusal Mendis,—,Right,Wicket Keeper,Wicket Keeper,Bronze,20,Srilanka,Gujarat Titans,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C1001,West Indies,Nicholas Pooran,—,Left,Wicket Keeper,Wicket Keeper,Gold,80,West Indies,Lucknow Super Giants,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C1002,West Indies,Sunil Narine,Right-arm offbreak,Left,All-rounder,All-rounder / Bowling,Gold,80,West Indies,Kolkata Knight Riders,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C1003,West Indies,Andre Russell,Right-arm fast-medium,Right,All-rounder,All-rounder,Gold,80,West Indies,Kolkata Knight Riders,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C1004,West Indies,Sherfane Rutherford,Right-arm medium,Left,Batsman,Batsman / Middle-order,Bronze,20,West Indies,Gujarat Titans,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C1005,West Indies,Rovman Powell,Right-arm medium,Right,Batsman,Batsman / Middle-order (Power-hitter) ,Bronze,20,West Indies,Kolkata Knight Riders,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C1006,West Indies,Romario Shepherd,Right-arm fast-medium,Right,All-rounder,All-rounder / Bowling,Bronze,20,West Indies,Royal Challengers Bengaluru,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C1007,West Indies,Shamar Joseph,Right-arm fast,Right,Bowler,Bowler / Fast,Bronze,20,West Indies,Lucknow Super Giants,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
+C1008,West Indies,Bevon Jacobs,Right-arm fast-medium,Right,Bowler,Bowler,Bronze,20,West Indies,Mumbai Indians,Overseas,Retired,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE
