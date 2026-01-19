@@ -40,6 +40,9 @@ interface AuctionState {
   tournament_filter: string;
   class_filter: string;
   role_filter: string;
+  bid_freeze_until?: string | null;
+  freeze_message?: string | null;
+  is_bid_locked?: boolean;
 }
 
 interface RoleCounts {
@@ -94,7 +97,6 @@ export default function AuctionPage() {
       }, (payload) => {
         console.log('Auction updated:', payload);
         
-        // Directly update state
         if (payload.new) {
           const newAuction = payload.new as AuctionState;
           setAuctionState({...newAuction});
@@ -454,7 +456,7 @@ export default function AuctionPage() {
         .from('team_players')
         .select('player_id, price')
         .eq('manager_id', managerId)
-        .eq('auction_id', auctionState.auction_id);  // ✅ Filter by current auction
+        .eq('auction_id', auctionState.auction_id);
 
       if (teamError) {
         console.error('Error loading team players:', teamError);
@@ -479,7 +481,6 @@ export default function AuctionPage() {
       }
 
       if (playersData) {
-        // Merge player data with prices
         const teamWithPrices = playersData.map(player => {
           const teamPlayer = teamData.find(tp => tp.player_id === player.player_id);
           return {
@@ -510,30 +511,70 @@ export default function AuctionPage() {
       return;
     }
 
-    console.log('💰 Placing bid:', nextBidAmount, 'for', currentPlayer.player_name);
+    console.log('💰 Attempting bid:', nextBidAmount, 'for', currentPlayer.player_name);
+
+    // ✅ CHECK IF BID IS LOCKED
+    const { data: currentAuction } = await supabase
+      .from('auctions')
+      .select('is_bid_locked, bid_freeze_until')
+      .eq('auction_id', auctionState.auction_id)
+      .single();
+
+    if (currentAuction?.is_bid_locked) {
+      alert('⏱️ Another bid in progress! Please wait...');
+      return;
+    }
+
+    // Check if still in freeze period
+    if (currentAuction?.bid_freeze_until) {
+      const freezeEnd = new Date(currentAuction.bid_freeze_until).getTime();
+      const now = Date.now();
+      if (now < freezeEnd) {
+        alert('⏱️ Bidding frozen! Please wait...');
+        return;
+      }
+    }
+
+    // ✅ LOCK BIDDING IMMEDIATELY (using optimistic locking)
+    const { data: lockResult, error: lockError } = await supabase
+      .from('auctions')
+      .update({ is_bid_locked: true })
+      .eq('auction_id', auctionState.auction_id)
+      .eq('is_bid_locked', false) // Only update if not already locked
+      .select();
+
+    if (lockError || !lockResult || lockResult.length === 0) {
+      console.log('⚠️ Bid lock failed - someone else bid first');
+      alert('⏱️ Another manager bid first! Try again...');
+      return;
+    }
+
+    // ✅ PLACE THE BID
+    const freezeUntil = new Date(Date.now() + 3000); // 3 seconds from now
+    const message = `${currentUser.team_name || currentUser.manager_name} bid ${nextBidAmount} pts!`;
 
     await supabase
       .from('auctions')
       .update({
         current_bid_amount: nextBidAmount,
         current_bid_manager_id: currentUser.manager_id,
-        timer_seconds: 30,
+        timer_seconds: 30, // ✅ RESET TIMER
+        bid_freeze_until: freezeUntil.toISOString(),
+        freeze_message: message,
       })
       .eq('auction_id', auctionState.auction_id);
 
-    const { error: bidError } = await supabase.from('bids').insert({
+    // Save bid history
+    await supabase.from('bids').insert({
       auction_id: auctionState.auction_id,
       manager_id: currentUser.manager_id,
       player_id: currentPlayer.player_id,
       bid_amount: nextBidAmount,
     });
 
-    if (bidError) {
-      console.error('❌ Error saving bid:', bidError);
-    } else {
-      console.log('✅ Bid saved to history');
-    }
+    console.log('✅ Bid placed successfully');
 
+    // Refresh user budget
     const { data: updatedUser } = await supabase
       .from('managers')
       .select('*')
@@ -543,6 +584,18 @@ export default function AuctionPage() {
     if (updatedUser) {
       setCurrentUser(updatedUser);
     }
+
+    // ✅ UNLOCK AFTER 3 SECONDS
+    setTimeout(async () => {
+      await supabase
+        .from('auctions')
+        .update({
+          is_bid_locked: false,
+          bid_freeze_until: null,
+          freeze_message: null,
+        })
+        .eq('auction_id', auctionState.auction_id);
+    }, 3000);
   };
 
   const getNextBidAmount = () => {
@@ -595,11 +648,13 @@ export default function AuctionPage() {
 
       console.log('📋 Processing sale for:', latestPlayer.player_name);
 
+      let manager = null;
+
       if (latestAuction.current_bid_manager_id && latestAuction.current_bid_amount > 0) {
         console.log('💰 Selling player to:', latestAuction.current_bid_manager_id, 'for', latestAuction.current_bid_amount);
         
         const { error: insertError } = await supabase.from('team_players').insert({
-          auction_id: latestAuction.auction_id,  // ✅ Track which auction
+          auction_id: latestAuction.auction_id,
           manager_id: latestAuction.current_bid_manager_id,
           player_id: latestPlayer.player_id,
           price: latestAuction.current_bid_amount,
@@ -612,11 +667,13 @@ export default function AuctionPage() {
           console.log('✅ Player added to team_players');
         }
 
-        const { data: manager } = await supabase
+        const { data: managerData } = await supabase
           .from('managers')
-          .select('current_budget')
+          .select('*')
           .eq('manager_id', latestAuction.current_bid_manager_id)
           .single();
+
+        manager = managerData;
 
         if (manager) {
           const newBudget = manager.current_budget - latestAuction.current_bid_amount;
@@ -634,7 +691,7 @@ export default function AuctionPage() {
       } else {
         console.log('⏭️ No bids - marking player as UNSOLD');
         
-        // Check if already marked as unsold (avoid duplicate constraint error)
+        // Check if already marked as unsold
         const { data: existingUnsold } = await supabase
           .from('unsold_players')
           .select('unsold_id')
@@ -645,7 +702,6 @@ export default function AuctionPage() {
         if (existingUnsold) {
           console.log('⚠️ Player already in unsold_players, skipping insert');
         } else {
-          // CRITICAL FIX: Add to unsold_players table (not team_players)
           const { error: unsoldError } = await supabase.from('unsold_players').insert({
             auction_id: latestAuction.auction_id,
             player_id: latestPlayer.player_id,
@@ -659,9 +715,38 @@ export default function AuctionPage() {
         }
       }
 
-      console.log('📥 Loading next player...');
-      await loadNextPlayer(latestAuction);
-      console.log('✅ Next player loaded successfully');
+      // ✅ SHOW 5-SECOND "SOLD" MESSAGE
+      const soldMsg = latestAuction.current_bid_manager_id && latestAuction.current_bid_amount > 0
+        ? `🎉 SOLD to ${manager?.team_name || manager?.manager_name || 'Manager'} for ${latestAuction.current_bid_amount} pts!`
+        : '⏭️ UNSOLD - Moving to next player...';
+
+      await supabase
+        .from('auctions')
+        .update({
+          freeze_message: soldMsg,
+          is_bid_locked: true,
+          bid_freeze_until: new Date(Date.now() + 5000).toISOString(),
+        })
+        .eq('auction_id', latestAuction.auction_id);
+
+      console.log('💬 Showing sold message for 5 seconds...');
+
+      // ✅ WAIT 5 SECONDS, THEN LOAD NEXT PLAYER
+      setTimeout(async () => {
+        console.log('📥 Loading next player...');
+        
+        await supabase
+          .from('auctions')
+          .update({
+            freeze_message: null,
+            is_bid_locked: false,
+            bid_freeze_until: null,
+          })
+          .eq('auction_id', latestAuction.auction_id);
+        
+        await loadNextPlayer(latestAuction);
+        console.log('✅ Next player loaded successfully');
+      }, 5000);
       
     } catch (error) {
       console.error('❌ Error in handlePlayerSold:', error);
@@ -749,7 +834,6 @@ export default function AuctionPage() {
     const missing = getMissingRoles();
     const totalMissing = missing.Batsman + missing.Bowler + missing['All-rounder'] + missing['Wicket Keeper'];
 
-    // If already meeting minimums, not frozen
     if (totalMissing === 0) {
       setIsFrozen(false);
       setFreezeMessage('');
@@ -757,32 +841,26 @@ export default function AuctionPage() {
     }
 
     try {
-      // Get all sold player IDs
       const { data: soldPlayers } = await supabase
         .from('team_players')
         .select('player_id');
 
       const soldPlayerIds = soldPlayers?.map(p => p.player_id) || [];
 
-      // Get unsold player IDs
       const { data: unsoldPlayers } = await supabase
         .from('unsold_players')
         .select('player_id')
         .eq('auction_id', auctionState.auction_id);
 
       const unsoldPlayerIds = unsoldPlayers?.map(p => p.player_id) || [];
-
-      // Combine - exclude BOTH sold AND unsold
       const excludedPlayerIds = [...soldPlayerIds, ...unsoldPlayerIds];
 
-      // Calculate minimum cost for each role
       let totalMinCost = 0;
       const roleDetails: string[] = [];
 
       for (const [role, needed] of Object.entries(missing)) {
         if (needed === 0) continue;
 
-        // Query cheapest available player for this role
         let query = supabase
           .from('players')
           .select('base_price')
@@ -801,14 +879,12 @@ export default function AuctionPage() {
           totalMinCost += costForRole;
           roleDetails.push(`${needed} ${role}(s): ${costForRole} pts`);
         } else {
-          // No players available for this role - CRITICAL!
           setIsFrozen(true);
           setFreezeMessage(`⚠️ No ${role}s available to meet minimum requirements!`);
           return;
         }
       }
 
-      // Check if budget is sufficient
       if (currentUser.current_budget < totalMinCost) {
         setIsFrozen(true);
         setFreezeMessage(`⚠️ Insufficient funds! Need ${totalMinCost} pts minimum (${roleDetails.join(', ')})`);
@@ -821,7 +897,6 @@ export default function AuctionPage() {
     }
   };
 
-  // Check budget freeze whenever team or budget changes
   useEffect(() => {
     if (currentUser && myTeam) {
       checkBudgetFreeze();
@@ -829,9 +904,9 @@ export default function AuctionPage() {
   }, [myTeam.length, currentUser?.current_budget]);
 
   const getRequirementStatus = (current: number, minimum: number) => {
-    if (current >= minimum) return { icon: '✓', color: '#2e7d32' }; // Green
-    if (current > 0) return { icon: '⚠️', color: '#f57c00' }; // Orange
-    return { icon: '❌', color: '#d32f2f' }; // Red
+    if (current >= minimum) return { icon: '✓', color: '#2e7d32' };
+    if (current > 0) return { icon: '⚠️', color: '#f57c00' };
+    return { icon: '❌', color: '#d32f2f' };
   };
 
   if (loading || !auctionState) {
@@ -952,6 +1027,24 @@ export default function AuctionPage() {
             </div>
           </div>
 
+          {/* Freeze Message */}
+          {auctionState.freeze_message && (
+            <div style={{
+              background: auctionState.freeze_message.includes('SOLD') || auctionState.freeze_message.includes('🎉') 
+                ? '#4caf50' 
+                : '#2196f3',
+              color: 'white',
+              padding: '20px',
+              borderRadius: '8px',
+              marginBottom: '15px',
+              textAlign: 'center',
+              fontSize: '18px',
+              fontWeight: 'bold',
+            }}>
+              {auctionState.freeze_message}
+            </div>
+          )}
+
           {/* Current Bid */}
           <div style={{
             background: currentBidder ? '#e3f2fd' : '#fff3cd',
@@ -1021,19 +1114,19 @@ export default function AuctionPage() {
             <div style={{ textAlign: 'center', marginBottom: '10px' }}>
               <button
                 onClick={handleBid}
-                disabled={auctionState.is_paused}
+                disabled={auctionState.is_paused || auctionState.is_bid_locked}
                 style={{
                   padding: '15px 40px',
                   fontSize: '18px',
                   fontWeight: 'bold',
-                  background: auctionState.is_paused ? '#ccc' : '#02084b',
+                  background: (auctionState.is_paused || auctionState.is_bid_locked) ? '#ccc' : '#02084b',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
-                  cursor: auctionState.is_paused ? 'not-allowed' : 'pointer',
+                  cursor: (auctionState.is_paused || auctionState.is_bid_locked) ? 'not-allowed' : 'pointer',
                 }}
               >
-                🎯 BID {nextBidAmount} POINTS
+                {auctionState.is_bid_locked ? '⏱️ WAIT...' : `🎯 BID ${nextBidAmount} POINTS`}
               </button>
               <p style={{ color: '#666', fontSize: '12px', marginTop: '5px' }}>
                 Budget: {currentUser.current_budget} pts
@@ -1217,7 +1310,7 @@ export default function AuctionPage() {
             🚪 Logout
           </button>
 
-          {/* Budget and Players - Side by Side */}
+          {/* Budget and Players */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
