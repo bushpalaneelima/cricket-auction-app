@@ -281,7 +281,7 @@ export default function AuctionPage() {
 
       setCurrentPlayer(player);
     } else {
-      if (auction.tournament_filter) {
+      if (auction.tournament_filter || auction.status === 'round2') {
         await loadNextPlayer(auction);
       }
     }
@@ -302,8 +302,7 @@ export default function AuctionPage() {
   const loadNextPlayer = async (auction: AuctionState) => {
     try {
       console.log('📥 Loading next player...');
-      console.log('🔍 Current filters:', auction.class_filter, auction.role_filter);
-      console.log('🔍 Auction ID:', auction.auction_id);
+      console.log('🔍 Auction status:', auction.status);
       
       // Get sold players
       const { data: soldPlayers } = await supabase
@@ -311,61 +310,86 @@ export default function AuctionPage() {
         .select('player_id');
 
       const soldPlayerIds = soldPlayers?.map(p => p.player_id) || [];
-      console.log('✅ Sold players:', soldPlayerIds.length, soldPlayerIds);
+      console.log('✅ Sold players:', soldPlayerIds.length);
 
-      // Get unsold players  
-      const { data: unsoldPlayers, error: unsoldError } = await supabase
-        .from('unsold_players')
-        .select('player_id')
-        .eq('auction_id', auction.auction_id);
+      let availablePlayers: Player[] = [];
 
-      if (unsoldError) {
-        console.error('❌ Error fetching unsold players:', unsoldError);
+      // ✅ ROUND 2 LOGIC
+      if (auction.status === 'round2') {
+        console.log('🎯 Loading Round 2 players from selections...');
+
+        // Get selected players for Round 2
+        const { data: round2Selections } = await supabase
+          .from('round2_selections')
+          .select('player_id')
+          .eq('auction_id', auction.auction_id);
+
+        if (!round2Selections || round2Selections.length === 0) {
+          alert('🎉 Round 2 Complete! No more players to auction!');
+          return;
+        }
+
+        const selectedPlayerIds = round2Selections.map(s => s.player_id);
+        console.log('📋 Total Round 2 selections:', selectedPlayerIds.length);
+
+        // Exclude already sold players
+        const unsoldSelectedIds = selectedPlayerIds.filter(id => !soldPlayerIds.includes(id));
+        console.log('📊 Unsold Round 2 players:', unsoldSelectedIds.length);
+
+        if (unsoldSelectedIds.length === 0) {
+          alert('🎉 Round 2 Complete! All selected players have been auctioned!');
+          return;
+        }
+
+        // Get player details
+        const { data: players } = await supabase
+          .from('players')
+          .select('*')
+          .in('player_id', unsoldSelectedIds);
+
+        availablePlayers = players || [];
+
+      } else {
+        // ✅ ROUND 1 LOGIC (existing code)
+        console.log('🔍 Round 1 - Current filters:', auction.class_filter, auction.role_filter);
+
+        // Get unsold players from Round 1
+        const { data: unsoldPlayers } = await supabase
+          .from('unsold_players')
+          .select('player_id')
+          .eq('auction_id', auction.auction_id);
+
+        const unsoldPlayerIds = unsoldPlayers?.map(p => p.player_id) || [];
+        const excludedPlayerIds = [...soldPlayerIds, ...unsoldPlayerIds];
+
+        let queryBuilder = supabase
+          .from('players')
+          .select('*');
+
+        if (auction.class_filter) {
+          queryBuilder = queryBuilder.eq('class_band', auction.class_filter);
+        }
+        
+        if (auction.role_filter) {
+          queryBuilder = queryBuilder.eq('role', auction.role_filter);
+        }
+
+        if (excludedPlayerIds.length > 0) {
+          queryBuilder = queryBuilder.not('player_id', 'in', `(${excludedPlayerIds.join(',')})`);
+        }
+
+        const { data: players } = await queryBuilder;
+        availablePlayers = players || [];
       }
 
-      const unsoldPlayerIds = unsoldPlayers?.map(p => p.player_id) || [];
-      console.log('⏭️ Unsold players:', unsoldPlayerIds.length, unsoldPlayerIds);
+      console.log('📊 Available players:', availablePlayers.length);
 
-      // Combine both lists - exclude BOTH sold AND unsold players
-      const excludedPlayerIds = [...soldPlayerIds, ...unsoldPlayerIds];
-      console.log('🚫 Total excluded:', excludedPlayerIds.length, excludedPlayerIds);
+      if (availablePlayers.length > 0) {
+        // Pick random player
+        const randomIndex = Math.floor(Math.random() * availablePlayers.length);
+        const newPlayer = availablePlayers[randomIndex];
 
-      let queryBuilder = supabase
-        .from('players')
-        .select('*');
-
-      if (auction.class_filter) {
-        queryBuilder = queryBuilder.eq('class_band', auction.class_filter);
-      }
-      
-      if (auction.role_filter) {
-        queryBuilder = queryBuilder.eq('role', auction.role_filter);
-      }
-
-      if (excludedPlayerIds.length > 0) {
-        queryBuilder = queryBuilder.not('player_id', 'in', `(${excludedPlayerIds.join(',')})`);
-      }
-
-      console.log('🔎 Querying players with filters...');
-
-      const { data: players, error } = await queryBuilder;
-
-      if (error) {
-        console.error('Query error:', error);
-        alert('Error loading players: ' + error.message);
-        return;
-      }
-
-      console.log('📊 Query returned', players?.length || 0, 'players');
-      if (players && players.length > 0) {
-        console.log('🎯 Available players:', players.map(p => `${p.player_name} (${p.player_id})`).slice(0, 5));
-      }
-
-      if (players && players.length > 0) {
-        const randomIndex = Math.floor(Math.random() * players.length);
-        const newPlayer = players[randomIndex];
-
-        console.log('✅ Selected player:', newPlayer.player_name, `(ID: ${newPlayer.player_id})`);
+        console.log('✅ Selected player:', newPlayer.player_name);
 
         await supabase
           .from('auctions')
@@ -381,10 +405,15 @@ export default function AuctionPage() {
         return;
       }
 
-      // NO PLAYERS FOUND - Auto-progress to next category
+      // No players found
+      if (auction.status === 'round2') {
+        alert('🎉 Round 2 Complete! All players have been auctioned!');
+        return;
+      }
+
+      // Round 1 - Auto-progress to next category
       console.log('No players in current category, auto-progressing...');
       
-      // ✅ ALL 6 CLASSES INCLUDED
       const categories = [
         { class: 'Platinum', role: 'Batsman' },
         { class: 'Platinum', role: 'Bowler' },
@@ -421,7 +450,7 @@ export default function AuctionPage() {
         
         console.log(`Moving from ${auction.class_filter} ${auction.role_filter} to ${nextCategory.class} ${nextCategory.role}`);
         
-        const { error: updateError } = await supabase
+        await supabase
           .from('auctions')
           .update({
             class_filter: nextCategory.class,
@@ -429,17 +458,11 @@ export default function AuctionPage() {
           })
           .eq('auction_id', auction.auction_id);
 
-        if (updateError) {
-          console.error('Error updating filters:', updateError);
-          alert('Error moving to next category');
-          return;
-        }
-
         const updatedAuction = { ...auction, class_filter: nextCategory.class, role_filter: nextCategory.role };
         await loadNextPlayer(updatedAuction);
         
       } else {
-        alert('🎉 Auction Complete! All players have been sold!');
+        alert('🎉 Round 1 Complete! All categories finished!');
       }
 
     } catch (error) {
@@ -535,12 +558,12 @@ export default function AuctionPage() {
       }
     }
 
-    // ✅ LOCK BIDDING IMMEDIATELY (using optimistic locking)
+    // ✅ LOCK BIDDING IMMEDIATELY
     const { data: lockResult, error: lockError } = await supabase
       .from('auctions')
       .update({ is_bid_locked: true })
       .eq('auction_id', auctionState.auction_id)
-      .eq('is_bid_locked', false) // Only update if not already locked
+      .eq('is_bid_locked', false)
       .select();
 
     if (lockError || !lockResult || lockResult.length === 0) {
@@ -550,7 +573,7 @@ export default function AuctionPage() {
     }
 
     // ✅ PLACE THE BID
-    const freezeUntil = new Date(Date.now() + 3000); // 3 seconds from now
+    const freezeUntil = new Date(Date.now() + 3000);
     const message = `${currentUser.team_name || currentUser.manager_name} bid ${nextBidAmount} pts!`;
 
     await supabase
@@ -558,7 +581,7 @@ export default function AuctionPage() {
       .update({
         current_bid_amount: nextBidAmount,
         current_bid_manager_id: currentUser.manager_id,
-        timer_seconds: 30, // ✅ RESET TIMER
+        timer_seconds: 30,
         bid_freeze_until: freezeUntil.toISOString(),
         freeze_message: message,
       })
@@ -600,6 +623,10 @@ export default function AuctionPage() {
 
   const getNextBidAmount = () => {
     if (!auctionState || auctionState.current_bid_amount === 0) {
+      // ✅ Round 2 base price is 0
+      if (auctionState?.status === 'round2') {
+        return 5; // First bid starts at 5
+      }
       return currentPlayer?.base_price || 5;
     }
 
@@ -612,7 +639,6 @@ export default function AuctionPage() {
   const handlePlayerSold = async () => {
     console.log('🔔 handlePlayerSold called');
     
-    // Prevent concurrent execution
     if (isProcessingSaleRef.current) {
       console.log('⚠️ Already processing a sale, skipping...');
       return;
@@ -621,7 +647,6 @@ export default function AuctionPage() {
     isProcessingSaleRef.current = true;
     
     try {
-      // IMPORTANT: Refetch latest auction state to avoid stale closures
       const { data: latestAuction } = await supabase
         .from('auctions')
         .select('*')
@@ -649,6 +674,7 @@ export default function AuctionPage() {
       console.log('📋 Processing sale for:', latestPlayer.player_name);
 
       let manager = null;
+      const currentRound = latestAuction.status === 'round2' ? 2 : 1;
 
       if (latestAuction.current_bid_manager_id && latestAuction.current_bid_amount > 0) {
         console.log('💰 Selling player to:', latestAuction.current_bid_manager_id, 'for', latestAuction.current_bid_amount);
@@ -658,13 +684,13 @@ export default function AuctionPage() {
           manager_id: latestAuction.current_bid_manager_id,
           player_id: latestPlayer.player_id,
           price: latestAuction.current_bid_amount,
-          round: 1,
+          round: currentRound, // ✅ Track which round
         });
 
         if (insertError) {
           console.error('❌ Error inserting team_players:', insertError);
         } else {
-          console.log('✅ Player added to team_players');
+          console.log('✅ Player added to team_players (Round', currentRound, ')');
         }
 
         const { data: managerData } = await supabase
@@ -689,28 +715,23 @@ export default function AuctionPage() {
           console.log('✅ Budget updated');
         }
       } else {
-        console.log('⏭️ No bids - marking player as UNSOLD');
+        console.log('⏭️ No bids - player UNSOLD');
         
-        // Check if already marked as unsold
-        const { data: existingUnsold } = await supabase
-          .from('unsold_players')
-          .select('unsold_id')
-          .eq('auction_id', latestAuction.auction_id)
-          .eq('player_id', latestPlayer.player_id)
-          .maybeSingle();
+        // Only mark as unsold in Round 1 (Round 2 players already were unsold)
+        if (latestAuction.status !== 'round2') {
+          const { data: existingUnsold } = await supabase
+            .from('unsold_players')
+            .select('unsold_id')
+            .eq('auction_id', latestAuction.auction_id)
+            .eq('player_id', latestPlayer.player_id)
+            .maybeSingle();
 
-        if (existingUnsold) {
-          console.log('⚠️ Player already in unsold_players, skipping insert');
-        } else {
-          const { error: unsoldError } = await supabase.from('unsold_players').insert({
-            auction_id: latestAuction.auction_id,
-            player_id: latestPlayer.player_id,
-          });
-
-          if (unsoldError) {
-            console.error('❌ Error marking player as unsold:', unsoldError);
-          } else {
-            console.log('✅ Player marked as unsold (saved for Auction 2)');
+          if (!existingUnsold) {
+            await supabase.from('unsold_players').insert({
+              auction_id: latestAuction.auction_id,
+              player_id: latestPlayer.player_id,
+            });
+            console.log('✅ Player marked as unsold');
           }
         }
       }
@@ -791,7 +812,6 @@ export default function AuctionPage() {
     return '#d32f2f';
   };
 
-  // Calculate role counts
   const getRoleCounts = (): RoleCounts => {
     const counts: RoleCounts = {
       'Batsman': 0,
@@ -809,7 +829,6 @@ export default function AuctionPage() {
     return counts;
   };
 
-  // Calculate missing roles to meet minimum requirements
   const getMissingRoles = (): RoleCounts => {
     const current = getRoleCounts();
     const minimums = {
@@ -827,7 +846,6 @@ export default function AuctionPage() {
     };
   };
 
-  // Check if manager can afford minimum requirements
   const checkBudgetFreeze = async () => {
     if (!currentUser || !auctionState) return;
 
@@ -946,6 +964,9 @@ export default function AuctionPage() {
                  !isFrozen;
   const roleCounts = getRoleCounts();
 
+  // Display base price (0 for Round 2, actual for Round 1)
+  const displayBasePrice = auctionState.status === 'round2' ? 0 : currentPlayer.base_price;
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -962,6 +983,21 @@ export default function AuctionPage() {
           borderRadius: '12px',
           boxShadow: '0 10px 30px rgba(2, 8, 75, 0.2)',
         }}>
+          {/* Round Indicator */}
+          {auctionState.status === 'round2' && (
+            <div style={{
+              background: '#ff9800',
+              color: 'white',
+              padding: '10px',
+              borderRadius: '8px',
+              textAlign: 'center',
+              marginBottom: '15px',
+              fontWeight: 'bold',
+            }}>
+              🔥 ROUND 2 AUCTION - Base Price: 0 pts
+            </div>
+          )}
+
           {/* Timer */}
           <div style={{ textAlign: 'center', marginBottom: '15px' }}>
             <div style={{
@@ -1010,7 +1046,7 @@ export default function AuctionPage() {
               </div>
               <div>
                 <p style={{ color: '#666', fontSize: '10px' }}>Base Price</p>
-                <p style={{ color: '#02084b', fontWeight: 'bold', fontSize: '12px' }}>{currentPlayer.base_price} pts</p>
+                <p style={{ color: '#02084b', fontWeight: 'bold', fontSize: '12px' }}>{displayBasePrice} pts</p>
               </div>
               {currentPlayer.role_detail && (
                 <div>
@@ -1066,7 +1102,7 @@ export default function AuctionPage() {
             ) : (
               <>
                 <p style={{ color: '#856404', fontSize: '16px', fontWeight: 'bold' }}>No bids yet!</p>
-                <p style={{ color: '#856404', fontSize: '12px' }}>Starting: {currentPlayer.base_price} points</p>
+                <p style={{ color: '#856404', fontSize: '12px' }}>Starting: {displayBasePrice} points</p>
               </>
             )}
           </div>
@@ -1134,7 +1170,7 @@ export default function AuctionPage() {
             </div>
           )}
 
-          {/* Frozen Bid Button (disabled) */}
+          {/* Frozen Bid Button */}
           {!teamComplete && isFrozen && (
             <div style={{ textAlign: 'center', marginBottom: '10px' }}>
               <button
@@ -1192,74 +1228,76 @@ export default function AuctionPage() {
                 </button>
               </div>
 
-              <div style={{
-                background: '#f8f9fa',
-                padding: '12px',
-                borderRadius: '8px',
-                marginBottom: '10px',
-              }}>
-                <p style={{ fontSize: '11px', color: '#666', marginBottom: '8px', fontWeight: '600' }}>
-                  🎛️ Manual Filter Override
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-                  <select
-                    value={selectedClass}
-                    onChange={(e) => setSelectedClass(e.target.value)}
+              {auctionState.status !== 'round2' && (
+                <div style={{
+                  background: '#f8f9fa',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  marginBottom: '10px',
+                }}>
+                  <p style={{ fontSize: '11px', color: '#666', marginBottom: '8px', fontWeight: '600' }}>
+                    🎛️ Manual Filter Override
+                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                    <select
+                      value={selectedClass}
+                      onChange={(e) => setSelectedClass(e.target.value)}
+                      style={{
+                        padding: '8px',
+                        fontSize: '12px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="">Select Class</option>
+                      <option value="Platinum">Platinum</option>
+                      <option value="Gold">Gold</option>
+                      <option value="Silver">Silver</option>
+                      <option value="Copper">Copper</option>
+                      <option value="Bronze">Bronze</option>
+                      <option value="Stone">Stone</option>
+                    </select>
+                    <select
+                      value={selectedRole}
+                      onChange={(e) => setSelectedRole(e.target.value)}
+                      style={{
+                        padding: '8px',
+                        fontSize: '12px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="">Select Role</option>
+                      <option value="Batsman">Batsman</option>
+                      <option value="Bowler">Bowler</option>
+                      <option value="All-rounder">All-rounder</option>
+                      <option value="Wicket Keeper">Wicket Keeper</option>
+                    </select>
+                  </div>
+                  <button
+                    onClick={handleApplyFilters}
+                    disabled={!selectedClass || !selectedRole}
                     style={{
+                      width: '100%',
                       padding: '8px',
                       fontSize: '12px',
-                      border: '1px solid #ddd',
+                      fontWeight: '600',
+                      background: (!selectedClass || !selectedRole) ? '#ccc' : '#02084b',
+                      color: 'white',
+                      border: 'none',
                       borderRadius: '4px',
-                      cursor: 'pointer',
+                      cursor: (!selectedClass || !selectedRole) ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    <option value="">Select Class</option>
-                    <option value="Platinum">Platinum</option>
-                    <option value="Gold">Gold</option>
-                    <option value="Silver">Silver</option>
-                    <option value="Copper">Copper</option>
-                    <option value="Bronze">Bronze</option>
-                    <option value="Stone">Stone</option>
-                  </select>
-                  <select
-                    value={selectedRole}
-                    onChange={(e) => setSelectedRole(e.target.value)}
-                    style={{
-                      padding: '8px',
-                      fontSize: '12px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <option value="">Select Role</option>
-                    <option value="Batsman">Batsman</option>
-                    <option value="Bowler">Bowler</option>
-                    <option value="All-rounder">All-rounder</option>
-                    <option value="Wicket Keeper">Wicket Keeper</option>
-                  </select>
+                    Apply Filters
+                  </button>
+                  <p style={{ fontSize: '10px', color: '#666', marginTop: '5px', fontStyle: 'italic' }}>
+                    Auto-progression resumes after current category completes
+                  </p>
                 </div>
-                <button
-                  onClick={handleApplyFilters}
-                  disabled={!selectedClass || !selectedRole}
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    background: (!selectedClass || !selectedRole) ? '#ccc' : '#02084b',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: (!selectedClass || !selectedRole) ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  Apply Filters
-                </button>
-                <p style={{ fontSize: '10px', color: '#666', marginTop: '5px', fontStyle: 'italic' }}>
-                  Auto-progression resumes after current category completes
-                </p>
-              </div>
+              )}
             </>
           )}
 
@@ -1277,7 +1315,7 @@ export default function AuctionPage() {
         </div>
       </div>
 
-      {/* Sidebar - My Team */}
+      {/* Sidebar */}
       <div style={{ width: '420px' }}>
         <div style={{
           background: 'white',
@@ -1289,7 +1327,6 @@ export default function AuctionPage() {
             {currentUser?.team_name || currentUser?.manager_name}
           </h3>
 
-          {/* Logout Button */}
           <button
             onClick={async () => {
               await supabase.auth.signOut();
@@ -1310,7 +1347,6 @@ export default function AuctionPage() {
             🚪 Logout
           </button>
 
-          {/* Budget and Players */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
@@ -1345,7 +1381,6 @@ export default function AuctionPage() {
             </div>
           </div>
 
-          {/* Role Requirements */}
           <div style={{
             background: '#f8f9fa',
             padding: '12px',
@@ -1394,7 +1429,6 @@ export default function AuctionPage() {
             })()}
           </div>
 
-          {/* Squad List */}
           <div>
             <h4 style={{ color: '#02084b', marginBottom: '10px', fontSize: '16px' }}>
               Squad ({myTeam.length})
@@ -1430,7 +1464,6 @@ export default function AuctionPage() {
             )}
           </div>
 
-          {/* Footer in Sidebar */}
           <div style={{
             textAlign: 'center',
             paddingTop: '15px',
