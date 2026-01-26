@@ -192,9 +192,22 @@ export default function AuctionPage() {
       const newTime = currentAuction.timer_seconds - 1;
       console.log('⏱️ Timer tick:', newTime, 'for player:', currentPlayer.player_name);
 
-      if (newTime <= 0) {
+if (newTime <= 0) {
         console.log('🛑 Timer hit 0 for:', currentPlayer.player_name);
         clearInterval(interval);
+        
+        // ✅ CHECK: Make sure no bid is in progress (race condition fix)
+        const { data: finalCheck } = await supabase
+          .from('auctions')
+          .select('is_bid_locked, timer_seconds')
+          .eq('auction_id', auctionState.auction_id)
+          .single();
+        
+        // If a bid just happened, timer was reset - don't sell!
+        if (finalCheck && (finalCheck.is_bid_locked || finalCheck.timer_seconds > 5)) {
+          console.log('⚠️ Bid detected at last second - not selling!');
+          return; // Exit, let the reset timer continue
+        }
         
         // Update DB to 0
         await supabase
@@ -213,7 +226,7 @@ export default function AuctionPage() {
           .eq('auction_id', auctionState.auction_id);
       }
     }, 1000);
-
+    
     // Cleanup function
     return () => {
       console.log('🧹 Cleaning up timer interval for player:', currentPlayer.player_name);
