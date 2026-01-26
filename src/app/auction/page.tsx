@@ -566,6 +566,35 @@ export default function AuctionPage() {
       return;
     }
 
+    // ✅ PRE-BID CHECK: Will I be able to complete my team after this bid?
+    const budgetAfterBid = currentUser.current_budget - nextBidAmount;
+    const playersAfterBid = myTeam.length + 1; // Assume we win this player
+    const playersStillNeeded = Math.max(0, 11 - playersAfterBid);
+    
+    if (playersStillNeeded > 0) {
+      const missing = getMissingRoles();
+      
+      // Calculate minimum cost for remaining required roles
+      let totalMinimumCost = 0;
+      const missingCount = missing.Batsman + missing.Bowler + missing['All-rounder'] + missing['Wicket Keeper'];
+      
+      // Use the higher of: missing role requirements OR total players needed
+      const playersToCalculate = Math.max(missingCount, playersStillNeeded);
+      
+      // Assume minimum price of 60 pts (Silver base price)
+      totalMinimumCost = playersToCalculate * 60;
+      
+      if (budgetAfterBid < totalMinimumCost) {
+        alert(
+          `⚠️ CANNOT BID!\n\n` +
+          `After this ${nextBidAmount} pts bid, you'll have ${budgetAfterBid} pts left.\n\n` +
+          `You still need ${playersStillNeeded} more players (minimum ${totalMinimumCost} pts).\n\n` +
+          `This bid would eliminate you from the game!`
+        );
+        return;
+      }
+    }
+
     console.log('💰 Attempting bid:', nextBidAmount, 'for', currentPlayer.player_name);
 
     // ✅ CHECK IF BID IS LOCKED
