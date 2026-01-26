@@ -125,7 +125,7 @@ export default function AuctionHistoryPage() {
   };
 
   const viewAuctionDetails = (auctionId: number) => {
-    router.push(`/admin/auction/${auctionId}`);
+    router.push(`/auction?id=${auctionId}`);
   };
 
   const deleteAuction = async (auctionId: number, auctionName: string) => {

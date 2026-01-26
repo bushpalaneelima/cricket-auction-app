@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Player {
   player_id: number;
@@ -54,6 +54,9 @@ interface RoleCounts {
 
 export default function AuctionPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const auctionIdParam = searchParams.get('id'); // ✅ Read auction ID from URL
+  
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<Manager | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
@@ -192,7 +195,7 @@ export default function AuctionPage() {
       const newTime = currentAuction.timer_seconds - 1;
       console.log('⏱️ Timer tick:', newTime, 'for player:', currentPlayer.player_name);
 
-if (newTime <= 0) {
+      if (newTime <= 0) {
         console.log('🛑 Timer hit 0 for:', currentPlayer.player_name);
         clearInterval(interval);
         
@@ -226,7 +229,7 @@ if (newTime <= 0) {
           .eq('auction_id', auctionState.auction_id);
       }
     }, 1000);
-    
+
     // Cleanup function
     return () => {
       console.log('🧹 Cleaning up timer interval for player:', currentPlayer.player_name);
@@ -269,18 +272,45 @@ if (newTime <= 0) {
   };
 
   const loadAuctionState = async () => {
-    const { data: auction } = await supabase
-      .from('auctions')
-      .select('*')
-      .in('status', ['active', 'round1', 'round2'])
-      .order('scheduled_at', { ascending: false })
-      .limit(1)
-      .single();
+    let auction = null;
 
-    if (!auction) {
-      alert('No active auction found!');
-      router.push('/lobby');
-      return;
+    // ✅ If auction ID provided in URL, load that specific auction
+    if (auctionIdParam) {
+      const auctionId = parseInt(auctionIdParam);
+      console.log('📥 Loading specific auction:', auctionId);
+
+      const { data: specificAuction } = await supabase
+        .from('auctions')
+        .select('*')
+        .eq('auction_id', auctionId)
+        .single();
+
+      if (!specificAuction) {
+        alert(`Auction #${auctionId} not found!`);
+        router.push('/history');
+        return;
+      }
+
+      auction = specificAuction;
+    } else {
+      // ✅ No ID provided - load most recent active auction (original behavior)
+      console.log('📥 Loading most recent active auction');
+
+      const { data: activeAuction } = await supabase
+        .from('auctions')
+        .select('*')
+        .in('status', ['active', 'round1', 'round2'])
+        .order('scheduled_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!activeAuction) {
+        alert('No active auction found!');
+        router.push('/lobby');
+        return;
+      }
+
+      auction = activeAuction;
     }
 
     setAuctionState(auction);
@@ -317,10 +347,11 @@ if (newTime <= 0) {
       console.log('📥 Loading next player...');
       console.log('🔍 Auction status:', auction.status);
       
-      // Get sold players
+      // Get sold players for THIS auction only
       const { data: soldPlayers } = await supabase
         .from('team_players')
-        .select('player_id');
+        .select('player_id')
+        .eq('auction_id', auction.auction_id);
 
       const soldPlayerIds = soldPlayers?.map(p => p.player_id) || [];
       console.log('✅ Sold players:', soldPlayerIds.length);
@@ -440,18 +471,6 @@ if (newTime <= 0) {
         { class: 'Silver', role: 'Bowler' },
         { class: 'Silver', role: 'All-rounder' },
         { class: 'Silver', role: 'Wicket Keeper' },
-        { class: 'Copper', role: 'Batsman' },
-        { class: 'Copper', role: 'Bowler' },
-        { class: 'Copper', role: 'All-rounder' },
-        { class: 'Copper', role: 'Wicket Keeper' },
-        { class: 'Bronze', role: 'Batsman' },
-        { class: 'Bronze', role: 'Bowler' },
-        { class: 'Bronze', role: 'All-rounder' },
-        { class: 'Bronze', role: 'Wicket Keeper' },
-        { class: 'Stone', role: 'Batsman' },
-        { class: 'Stone', role: 'Bowler' },
-        { class: 'Stone', role: 'All-rounder' },
-        { class: 'Stone', role: 'Wicket Keeper' },
       ];
 
       const currentIndex = categories.findIndex(
@@ -663,9 +682,7 @@ if (newTime <= 0) {
       const { data: latestAuction } = await supabase
         .from('auctions')
         .select('*')
-        .in('status', ['active', 'round1', 'round2'])
-        .order('scheduled_at', { ascending: false })
-        .limit(1)
+        .eq('auction_id', auctionState!.auction_id)
         .single();
 
       if (!latestAuction) {
@@ -697,7 +714,7 @@ if (newTime <= 0) {
           manager_id: latestAuction.current_bid_manager_id,
           player_id: latestPlayer.player_id,
           price: latestAuction.current_bid_amount,
-          round: currentRound, // ✅ Track which round
+          round: currentRound,
         });
 
         if (insertError) {
@@ -874,7 +891,8 @@ if (newTime <= 0) {
     try {
       const { data: soldPlayers } = await supabase
         .from('team_players')
-        .select('player_id');
+        .select('player_id')
+        .eq('auction_id', auctionState.auction_id);
 
       const soldPlayerIds = soldPlayers?.map(p => p.player_id) || [];
 
@@ -1267,9 +1285,6 @@ if (newTime <= 0) {
                       <option value="Platinum">Platinum</option>
                       <option value="Gold">Gold</option>
                       <option value="Silver">Silver</option>
-                      <option value="Copper">Copper</option>
-                      <option value="Bronze">Bronze</option>
-                      <option value="Stone">Stone</option>
                     </select>
                     <select
                       value={selectedRole}
