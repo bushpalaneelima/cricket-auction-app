@@ -479,6 +479,19 @@ function AuctionPageContent() {
         
       } else {
         console.log('🎉 Round 1 Complete! All categories finished!');
+        
+        // Update auction status to 'completed'
+        await supabase
+          .from('auctions')
+          .update({ 
+            status: 'completed',
+            current_player_id: null,
+            current_bid_amount: 0,
+            current_bid_manager_id: null,
+            is_paused: true,
+          })
+          .eq('auction_id', auction.auction_id);
+        
         setRound1Complete(true);
         setCurrentPlayer(null);
       }
@@ -814,23 +827,8 @@ function AuctionPageContent() {
       .eq('auction_id', auctionState.auction_id);
   };
 
-  const handleStartRound2 = async () => {
-    if (!auctionState || currentUser?.role !== 'admin') return;
-
-    await supabase
-      .from('auctions')
-      .update({ 
-        status: 'round2',
-        current_player_id: null,
-        current_bid_amount: 0,
-        current_bid_manager_id: null,
-        timer_seconds: 30,
-        is_paused: false,
-      })
-      .eq('auction_id', auctionState.auction_id);
-
-    setRound1Complete(false);
-    window.location.reload();
+  const handleGoToRound2Setup = () => {
+    router.push('/admin/round2');
   };
 
   const handleApplyFilters = async () => {
@@ -1013,10 +1011,10 @@ function AuctionPageContent() {
           </h1>
           <p style={{ color: '#666', fontSize: '16px', marginBottom: '30px', lineHeight: '1.6' }}>
             All categories have been auctioned.<br/>
-            Ready to start Round 2 with unsold players?
+            Ready to set up Round 2?
           </p>
           <button
-            onClick={handleStartRound2}
+            onClick={handleGoToRound2Setup}
             style={{
               padding: '18px 50px',
               fontSize: '20px',
@@ -1032,7 +1030,7 @@ function AuctionPageContent() {
             onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
             onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
-            🚀 START ROUND 2
+            🎯 GO TO ROUND 2 SETUP
           </button>
         </div>
       </div>
