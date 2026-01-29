@@ -55,7 +55,7 @@ interface RoleCounts {
 function AuctionPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const auctionIdParam = searchParams.get('id'); // ✅ Read auction ID from URL
+  const auctionIdParam = searchParams.get('id');
   
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<Manager | null>(null);
@@ -66,11 +66,9 @@ function AuctionPageContent() {
   const [isFrozen, setIsFrozen] = useState(false);
   const [freezeMessage, setFreezeMessage] = useState('');
   
-  // Filter controls
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
 
-  // Ref to track if we should sell player when timer hits 0
   const shouldSellRef = useRef(false);
   const isProcessingSaleRef = useRef(false);
 
@@ -78,7 +76,6 @@ function AuctionPageContent() {
     checkAuth();
   }, []);
 
-  // Update filter selections when auction state changes
   useEffect(() => {
     if (auctionState) {
       setSelectedClass(auctionState.class_filter || '');
@@ -86,7 +83,6 @@ function AuctionPageContent() {
     }
   }, [auctionState?.class_filter, auctionState?.role_filter]);
 
-  // Subscribe to auction changes
   useEffect(() => {
     if (!auctionState || !currentUser) return;
 
@@ -104,7 +100,6 @@ function AuctionPageContent() {
           const newAuction = payload.new as AuctionState;
           setAuctionState({...newAuction});
           
-          // ALWAYS reload bidder when bid amount or bidder changes
           if (newAuction.current_bid_manager_id) {
             supabase
               .from('managers')
@@ -118,7 +113,6 @@ function AuctionPageContent() {
             setCurrentBidder(null);
           }
           
-          // ALWAYS reload player when player changes
           if (newAuction.current_player_id) {
             supabase
               .from('players')
@@ -172,7 +166,6 @@ function AuctionPageContent() {
     }
   };
 
-  // Timer countdown (only for admin) - Updates database every second
   useEffect(() => {
     if (!auctionState || !currentUser) return;
     if (currentUser.role !== 'admin') return;
@@ -199,30 +192,25 @@ function AuctionPageContent() {
         console.log('🛑 Timer hit 0 for:', currentPlayer.player_name);
         clearInterval(interval);
         
-        // ✅ CHECK: Make sure no bid is in progress (race condition fix)
         const { data: finalCheck } = await supabase
           .from('auctions')
           .select('is_bid_locked, timer_seconds')
           .eq('auction_id', auctionState.auction_id)
           .single();
         
-        // If a bid just happened, timer was reset - don't sell!
         if (finalCheck && (finalCheck.is_bid_locked || finalCheck.timer_seconds > 5)) {
           console.log('⚠️ Bid detected at last second - not selling!');
-          return; // Exit, let the reset timer continue
+          return;
         }
         
-        // Update DB to 0
         await supabase
           .from('auctions')
           .update({ timer_seconds: 0 })
           .eq('auction_id', auctionState.auction_id);
         
-        // Call handlePlayerSold DIRECTLY
         console.log('🔔 Calling handlePlayerSold directly...');
         await handlePlayerSold();
       } else {
-        // Update database - this will trigger real-time sync for all users
         await supabase
           .from('auctions')
           .update({ timer_seconds: newTime })
@@ -230,51 +218,23 @@ function AuctionPageContent() {
       }
     }, 1000);
 
-    // Cleanup function
     return () => {
       console.log('🧹 Cleaning up timer interval for player:', currentPlayer.player_name);
       clearInterval(interval);
     };
   }, [auctionState?.auction_id, auctionState?.is_paused, currentPlayer?.player_id, currentUser?.role]);
 
-  // Separate effect to handle selling when SKIP button is used
   useEffect(() => {
     if (shouldSellRef.current && auctionState && currentPlayer) {
       console.log('🔔 Executing player sale from ref...');
       shouldSellRef.current = false;
       handlePlayerSold();
     }
-  }, [shouldSellRef.current]); 
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-
-    const { data: mgr } = await supabase
-      .from('managers')
-      .select('*')
-      .eq('email', session.user.email)
-      .single();
-
-    if (!mgr) {
-      router.push('/login');
-      return;
-    }
-
-    setCurrentUser(mgr);
-    await loadAuctionState();
-    loadMyTeam(mgr.manager_id);
-        setLoading(false);
-  };
+  }, [shouldSellRef.current]);
 
   const loadAuctionState = async () => {
     let auction = null;
 
-    // ✅ If auction ID provided in URL, load that specific auction
     if (auctionIdParam) {
       const auctionId = parseInt(auctionIdParam);
       console.log('📥 Loading specific auction:', auctionId);
@@ -293,7 +253,6 @@ function AuctionPageContent() {
 
       auction = specificAuction;
     } else {
-      // ✅ No ID provided - load most recent active auction (original behavior)
       console.log('📥 Loading most recent active auction');
 
       const { data: activeAuction } = await supabase
@@ -340,6 +299,35 @@ function AuctionPageContent() {
     } else {
       setCurrentBidder(null);
     }
+    
+    return auction;
+  };
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    const { data: mgr } = await supabase
+      .from('managers')
+      .select('*')
+      .eq('email', session.user.email)
+      .single();
+
+    if (!mgr) {
+      router.push('/login');
+      return;
+    }
+
+    setCurrentUser(mgr);
+    const auction = await loadAuctionState();
+    if (auction) {
+      loadMyTeam(mgr.manager_id, auction);
+    }
+    setLoading(false);
   };
 
   const loadNextPlayer = async (auction: AuctionState) => {
@@ -347,7 +335,6 @@ function AuctionPageContent() {
       console.log('📥 Loading next player...');
       console.log('🔍 Auction status:', auction.status);
       
-      // Get sold players for THIS auction only
       const { data: soldPlayers } = await supabase
         .from('team_players')
         .select('player_id')
@@ -358,11 +345,9 @@ function AuctionPageContent() {
 
       let availablePlayers: Player[] = [];
 
-      // ✅ ROUND 2 LOGIC
       if (auction.status === 'round2') {
         console.log('🎯 Loading Round 2 players from selections...');
 
-        // Get selected players for Round 2
         const { data: round2Selections } = await supabase
           .from('round2_selections')
           .select('player_id')
@@ -376,7 +361,6 @@ function AuctionPageContent() {
         const selectedPlayerIds = round2Selections.map(s => s.player_id);
         console.log('📋 Total Round 2 selections:', selectedPlayerIds.length);
 
-        // Exclude already sold players
         const unsoldSelectedIds = selectedPlayerIds.filter(id => !soldPlayerIds.includes(id));
         console.log('📊 Unsold Round 2 players:', unsoldSelectedIds.length);
 
@@ -385,7 +369,6 @@ function AuctionPageContent() {
           return;
         }
 
-        // Get player details
         const { data: players } = await supabase
           .from('players')
           .select('*')
@@ -394,10 +377,8 @@ function AuctionPageContent() {
         availablePlayers = players || [];
 
       } else {
-        // ✅ ROUND 1 LOGIC (existing code)
         console.log('🔍 Round 1 - Current filters:', auction.class_filter, auction.role_filter);
 
-        // Get unsold players from Round 1
         const { data: unsoldPlayers } = await supabase
           .from('unsold_players')
           .select('player_id')
@@ -429,7 +410,6 @@ function AuctionPageContent() {
       console.log('📊 Available players:', availablePlayers.length);
 
       if (availablePlayers.length > 0) {
-        // Pick random player
         const randomIndex = Math.floor(Math.random() * availablePlayers.length);
         const newPlayer = availablePlayers[randomIndex];
 
@@ -449,13 +429,11 @@ function AuctionPageContent() {
         return;
       }
 
-      // No players found
       if (auction.status === 'round2') {
         alert('🎉 Round 2 Complete! All players have been auctioned!');
         return;
       }
 
-      // Round 1 - Auto-progress to next category
       console.log('No players in current category, auto-progressing...');
       
       const categories = [
@@ -503,15 +481,16 @@ function AuctionPageContent() {
     }
   };
 
-  const loadMyTeam = async (managerId: number) => {
-    if (!auctionState) return;
+  const loadMyTeam = async (managerId: number, auction?: AuctionState) => {
+    const auctionToUse = auction || auctionState;
+    if (!auctionToUse) return;
     
     try {
       const { data: teamData, error: teamError } = await supabase
         .from('team_players')
         .select('player_id, price')
         .eq('manager_id', managerId)
-        .eq('auction_id', auctionState.auction_id);
+        .eq('auction_id', auctionToUse.auction_id);
 
       if (teamError) {
         console.error('Error loading team players:', teamError);
@@ -553,7 +532,6 @@ function AuctionPageContent() {
   const handleBid = async () => {
     if (!currentUser || !currentPlayer || !auctionState) return;
 
-    // Check 15-player limit
     if (myTeam.length >= 15) {
       alert('You have reached the maximum of 15 players!');
       return;
@@ -566,22 +544,18 @@ function AuctionPageContent() {
       return;
     }
 
-    // ✅ PRE-BID CHECK: Will I be able to complete my team after this bid?
     const budgetAfterBid = currentUser.current_budget - nextBidAmount;
-    const playersAfterBid = myTeam.length + 1; // Assume we win this player
+    const playersAfterBid = myTeam.length + 1;
     const playersStillNeeded = Math.max(0, 11 - playersAfterBid);
     
     if (playersStillNeeded > 0) {
       const missing = getMissingRoles();
       
-      // Calculate minimum cost for remaining required roles
       let totalMinimumCost = 0;
       const missingCount = missing.Batsman + missing.Bowler + missing['All-rounder'] + missing['Wicket Keeper'];
       
-      // Use the higher of: missing role requirements OR total players needed
       const playersToCalculate = Math.max(missingCount, playersStillNeeded);
       
-      // Assume minimum price of 60 pts (Silver base price)
       totalMinimumCost = playersToCalculate * 60;
       
       if (budgetAfterBid < totalMinimumCost) {
@@ -597,7 +571,6 @@ function AuctionPageContent() {
 
     console.log('💰 Attempting bid:', nextBidAmount, 'for', currentPlayer.player_name);
 
-    // ✅ CHECK IF BID IS LOCKED
     const { data: currentAuction } = await supabase
       .from('auctions')
       .select('is_bid_locked, bid_freeze_until')
@@ -609,7 +582,6 @@ function AuctionPageContent() {
       return;
     }
 
-    // Check if still in freeze period
     if (currentAuction?.bid_freeze_until) {
       const freezeEnd = new Date(currentAuction.bid_freeze_until).getTime();
       const now = Date.now();
@@ -619,7 +591,6 @@ function AuctionPageContent() {
       }
     }
 
-    // ✅ LOCK BIDDING IMMEDIATELY
     const { data: lockResult, error: lockError } = await supabase
       .from('auctions')
       .update({ is_bid_locked: true })
@@ -633,7 +604,6 @@ function AuctionPageContent() {
       return;
     }
 
-    // ✅ PLACE THE BID
     const freezeUntil = new Date(Date.now() + 3000);
     const message = `${currentUser.team_name || currentUser.manager_name} bid ${nextBidAmount} pts!`;
 
@@ -648,7 +618,6 @@ function AuctionPageContent() {
       })
       .eq('auction_id', auctionState.auction_id);
 
-    // Save bid history
     await supabase.from('bids').insert({
       auction_id: auctionState.auction_id,
       manager_id: currentUser.manager_id,
@@ -658,7 +627,6 @@ function AuctionPageContent() {
 
     console.log('✅ Bid placed successfully');
 
-    // Refresh user budget
     const { data: updatedUser } = await supabase
       .from('managers')
       .select('*')
@@ -669,7 +637,6 @@ function AuctionPageContent() {
       setCurrentUser(updatedUser);
     }
 
-    // ✅ UNLOCK AFTER 3 SECONDS
     setTimeout(async () => {
       await supabase
         .from('auctions')
@@ -684,9 +651,8 @@ function AuctionPageContent() {
 
   const getNextBidAmount = () => {
     if (!auctionState || auctionState.current_bid_amount === 0) {
-      // ✅ Round 2 base price is 0
       if (auctionState?.status === 'round2') {
-        return 5; // First bid starts at 5
+        return 5;
       }
       return currentPlayer?.base_price || 5;
     }
@@ -776,7 +742,6 @@ function AuctionPageContent() {
       } else {
         console.log('⏭️ No bids - player UNSOLD');
         
-        // Only mark as unsold in Round 1 (Round 2 players already were unsold)
         if (latestAuction.status !== 'round2') {
           const { data: existingUnsold } = await supabase
             .from('unsold_players')
@@ -795,7 +760,6 @@ function AuctionPageContent() {
         }
       }
 
-      // ✅ SHOW 5-SECOND "SOLD" MESSAGE
       const soldMsg = latestAuction.current_bid_manager_id && latestAuction.current_bid_amount > 0
         ? `🎉 SOLD to ${manager?.team_name || manager?.manager_name || 'Manager'} for ${latestAuction.current_bid_amount} pts!`
         : '⏭️ UNSOLD - Moving to next player...';
@@ -811,7 +775,6 @@ function AuctionPageContent() {
 
       console.log('💬 Showing sold message for 5 seconds...');
 
-      // ✅ WAIT 5 SECONDS, THEN LOAD NEXT PLAYER
       setTimeout(async () => {
         console.log('📥 Loading next player...');
         
@@ -1024,7 +987,6 @@ function AuctionPageContent() {
                  !isFrozen;
   const roleCounts = getRoleCounts();
 
-  // Display base price (0 for Round 2, actual for Round 1)
   const displayBasePrice = auctionState.status === 'round2' ? 0 : currentPlayer.base_price;
 
   return (
@@ -1035,7 +997,6 @@ function AuctionPageContent() {
       display: 'flex',
       gap: '15px',
     }}>
-      {/* Main Auction Area */}
       <div style={{ flex: 1 }}>
         <div style={{
           background: 'white',
@@ -1043,7 +1004,6 @@ function AuctionPageContent() {
           borderRadius: '12px',
           boxShadow: '0 10px 30px rgba(2, 8, 75, 0.2)',
         }}>
-          {/* Round Indicator */}
           {auctionState.status === 'round2' && (
             <div style={{
               background: '#ff9800',
@@ -1058,7 +1018,6 @@ function AuctionPageContent() {
             </div>
           )}
 
-          {/* Timer */}
           <div style={{ textAlign: 'center', marginBottom: '15px' }}>
             <div style={{
               fontSize: '48px',
@@ -1071,7 +1030,6 @@ function AuctionPageContent() {
             <p style={{ color: '#666', fontSize: '12px' }}>seconds remaining</p>
           </div>
 
-          {/* Current Player */}
           <div style={{
             background: '#f8f9fa',
             padding: '15px',
@@ -1123,7 +1081,6 @@ function AuctionPageContent() {
             </div>
           </div>
 
-          {/* Freeze Message */}
           {auctionState.freeze_message && (
             <div style={{
               background: auctionState.freeze_message.includes('SOLD') || auctionState.freeze_message.includes('🎉') 
@@ -1141,7 +1098,6 @@ function AuctionPageContent() {
             </div>
           )}
 
-          {/* Current Bid */}
           <div style={{
             background: currentBidder ? '#e3f2fd' : '#fff3cd',
             padding: '15px',
@@ -1167,7 +1123,6 @@ function AuctionPageContent() {
             )}
           </div>
 
-          {/* Team Complete Message */}
           {teamComplete && (
             <div style={{
               background: '#4caf50',
@@ -1186,7 +1141,6 @@ function AuctionPageContent() {
             </div>
           )}
 
-          {/* Budget Frozen Message */}
           {!teamComplete && isFrozen && freezeMessage && (
             <div style={{
               background: '#ff9800',
@@ -1205,7 +1159,6 @@ function AuctionPageContent() {
             </div>
           )}
 
-          {/* Bid Button */}
           {canBid && (
             <div style={{ textAlign: 'center', marginBottom: '10px' }}>
               <button
@@ -1230,7 +1183,6 @@ function AuctionPageContent() {
             </div>
           )}
 
-          {/* Frozen Bid Button */}
           {!teamComplete && isFrozen && (
             <div style={{ textAlign: 'center', marginBottom: '10px' }}>
               <button
@@ -1254,7 +1206,6 @@ function AuctionPageContent() {
             </div>
           )}
 
-          {/* Admin Controls */}
           {currentUser?.role === 'admin' && (
             <>
               <div style={{ textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '15px' }}>
@@ -1358,7 +1309,6 @@ function AuctionPageContent() {
             </>
           )}
 
-          {/* Footer */}
           <div style={{
             textAlign: 'center',
             paddingTop: '12px',
@@ -1372,7 +1322,6 @@ function AuctionPageContent() {
         </div>
       </div>
 
-      {/* Sidebar */}
       <div style={{ width: '420px' }}>
         <div style={{
           background: 'white',
@@ -1536,6 +1485,7 @@ function AuctionPageContent() {
     </div>
   );
 }
+
 export default function AuctionPage() {
   return (
     <Suspense fallback={<div style={{ 
