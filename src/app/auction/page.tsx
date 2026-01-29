@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -52,7 +52,7 @@ interface RoleCounts {
   'Wicket Keeper': number;
 }
 
-export default function AuctionPage() {
+function AuctionPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const auctionIdParam = searchParams.get('id'); // ✅ Read auction ID from URL
@@ -1534,5 +1534,20 @@ export default function AuctionPage() {
         </div>
       </div>
     </div>
+  );
+}
+export default function AuctionPage() {
+  return (
+    <Suspense fallback={<div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      minHeight: '100vh',
+      background: '#F8F8FC'
+    }}>
+      <p>Loading auction...</p>
+    </div>}>
+      <AuctionPageContent />
+    </Suspense>
   );
 }
