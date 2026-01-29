@@ -65,6 +65,7 @@ function AuctionPageContent() {
   const [myTeam, setMyTeam] = useState<TeamPlayer[]>([]);
   const [isFrozen, setIsFrozen] = useState(false);
   const [freezeMessage, setFreezeMessage] = useState('');
+  const [round1Complete, setRound1Complete] = useState(false);
   
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
@@ -122,6 +123,8 @@ function AuctionPageContent() {
               .then(({ data }) => {
                 if (data) setCurrentPlayer(data);
               });
+          } else {
+            setCurrentPlayer(null);
           }
         }
       })
@@ -354,7 +357,8 @@ function AuctionPageContent() {
           .eq('auction_id', auction.auction_id);
 
         if (!round2Selections || round2Selections.length === 0) {
-          alert('🎉 Round 2 Complete! No more players to auction!');
+          console.log('🎉 Round 2 Complete!');
+          setCurrentPlayer(null);
           return;
         }
 
@@ -365,7 +369,8 @@ function AuctionPageContent() {
         console.log('📊 Unsold Round 2 players:', unsoldSelectedIds.length);
 
         if (unsoldSelectedIds.length === 0) {
-          alert('🎉 Round 2 Complete! All selected players have been auctioned!');
+          console.log('🎉 Round 2 Complete!');
+          setCurrentPlayer(null);
           return;
         }
 
@@ -430,7 +435,8 @@ function AuctionPageContent() {
       }
 
       if (auction.status === 'round2') {
-        alert('🎉 Round 2 Complete! All players have been auctioned!');
+        console.log('🎉 Round 2 Complete!');
+        setCurrentPlayer(null);
         return;
       }
 
@@ -472,12 +478,13 @@ function AuctionPageContent() {
         await loadNextPlayer(updatedAuction);
         
       } else {
-        alert('🎉 Round 1 Complete! All categories finished!');
+        console.log('🎉 Round 1 Complete! All categories finished!');
+        setRound1Complete(true);
+        setCurrentPlayer(null);
       }
 
     } catch (error) {
       console.error('Error loading player:', error);
-      alert('Error: ' + error);
     }
   };
 
@@ -807,6 +814,25 @@ function AuctionPageContent() {
       .eq('auction_id', auctionState.auction_id);
   };
 
+  const handleStartRound2 = async () => {
+    if (!auctionState || currentUser?.role !== 'admin') return;
+
+    await supabase
+      .from('auctions')
+      .update({ 
+        status: 'round2',
+        current_player_id: null,
+        current_bid_amount: 0,
+        current_bid_manager_id: null,
+        timer_seconds: 30,
+        is_paused: false,
+      })
+      .eq('auction_id', auctionState.auction_id);
+
+    setRound1Complete(false);
+    window.location.reload();
+  };
+
   const handleApplyFilters = async () => {
     if (!auctionState || currentUser?.role !== 'admin') return;
     if (!selectedClass || !selectedRole) {
@@ -897,7 +923,7 @@ function AuctionPageContent() {
       const excludedPlayerIds = [...soldPlayerIds, ...unsoldPlayerIds];
 
       let totalMinCost = 0;
-      const roleDetails: string[] = [];
+      let someRoleUnavailable = false;
 
       for (const [role, needed] of Object.entries(missing)) {
         if (needed === 0) continue;
@@ -915,20 +941,18 @@ function AuctionPageContent() {
 
         const { data: cheapestPlayers } = await query;
 
-        if (cheapestPlayers && cheapestPlayers.length > 0) {
+        if (!cheapestPlayers || cheapestPlayers.length === 0) {
+          someRoleUnavailable = true;
+          break;
+        } else {
           const costForRole = cheapestPlayers.reduce((sum, p) => sum + p.base_price, 0);
           totalMinCost += costForRole;
-          roleDetails.push(`${needed} ${role}(s): ${costForRole} pts`);
-        } else {
-          setIsFrozen(true);
-          setFreezeMessage(`⚠️ No ${role}s available to meet minimum requirements!`);
-          return;
         }
       }
 
-      if (currentUser.current_budget < totalMinCost) {
+      if (someRoleUnavailable || currentUser.current_budget < totalMinCost) {
         setIsFrozen(true);
-        setFreezeMessage(`⚠️ Insufficient funds! Need ${totalMinCost} pts minimum (${roleDetails.join(', ')})`);
+        setFreezeMessage('Cannot meet minimum team requirements.\n\nWhat\'s Next: Wait for more players to be auctioned or for Round 2 to begin.');
       } else {
         setIsFrozen(false);
         setFreezeMessage('');
@@ -964,6 +988,108 @@ function AuctionPageContent() {
     );
   }
 
+  // Round 1 Complete - Admin View
+  if (round1Complete && currentUser?.role === 'admin') {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #02084b 0%, #3E5B99 100%)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px',
+      }}>
+        <div style={{
+          background: 'white',
+          padding: '40px',
+          borderRadius: '16px',
+          maxWidth: '500px',
+          textAlign: 'center',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>🎉</div>
+          <h1 style={{ color: '#02084b', fontSize: '32px', marginBottom: '15px' }}>
+            Round 1 Complete!
+          </h1>
+          <p style={{ color: '#666', fontSize: '16px', marginBottom: '30px', lineHeight: '1.6' }}>
+            All categories have been auctioned.<br/>
+            Ready to start Round 2 with unsold players?
+          </p>
+          <button
+            onClick={handleStartRound2}
+            style={{
+              padding: '18px 50px',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              background: '#4caf50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 15px rgba(76, 175, 80, 0.4)',
+              transition: 'transform 0.2s',
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            🚀 START ROUND 2
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Round 1 Complete - Regular User View
+  if (round1Complete && currentUser?.role !== 'admin') {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #02084b 0%, #3E5B99 100%)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px',
+      }}>
+        <div style={{
+          background: 'white',
+          padding: '40px',
+          borderRadius: '16px',
+          maxWidth: '500px',
+          textAlign: 'center',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+        }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>⏳</div>
+          <h1 style={{ color: '#02084b', fontSize: '32px', marginBottom: '15px' }}>
+            Waiting for Round 2
+          </h1>
+          <p style={{ color: '#666', fontSize: '16px', lineHeight: '1.6' }}>
+            Round 1 is complete!<br/>
+            Admin is preparing Round 2...<br/><br/>
+            Please wait...
+          </p>
+          <div style={{ marginTop: '30px' }}>
+            <div className="spinner" style={{
+              width: '50px',
+              height: '50px',
+              border: '5px solid #f3f3f3',
+              borderTop: '5px solid #02084b',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto',
+            }}></div>
+          </div>
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      </div>
+    );
+  }
+
+  // No player available (waiting to load)
   if (!currentPlayer) {
     return (
       <div style={{ 
@@ -971,9 +1097,9 @@ function AuctionPageContent() {
         justifyContent: 'center', 
         alignItems: 'center', 
         minHeight: '100vh',
-        background: '#F8F8FC'
+        background: 'linear-gradient(135deg, #02084b 0%, #3E5B99 100%)'
       }}>
-        <p>Loading player...</p>
+        <p style={{ color: 'white', fontSize: '18px' }}>Loading player...</p>
       </div>
     );
   }
@@ -1151,9 +1277,9 @@ function AuctionPageContent() {
               textAlign: 'center',
             }}>
               <p style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>
-                ⚠️ Bidding Frozen
+                ⚠️ Bidding Paused
               </p>
-              <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>
+              <p style={{ fontSize: '13px', marginTop: '8px', margin: 0, whiteSpace: 'pre-line' }}>
                 {freezeMessage}
               </p>
             </div>
