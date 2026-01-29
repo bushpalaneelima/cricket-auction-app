@@ -266,9 +266,9 @@ export default function AuctionPage() {
     }
 
     setCurrentUser(mgr);
-    loadMyTeam(mgr.manager_id);
     await loadAuctionState();
-    setLoading(false);
+    loadMyTeam(mgr.manager_id);
+        setLoading(false);
   };
 
   const loadAuctionState = async () => {
