@@ -261,7 +261,7 @@ function AuctionPageContent() {
       const { data: activeAuction } = await supabase
         .from('auctions')
         .select('*')
-        .in('status', ['active', 'round1', 'round2'])
+        .in('status', ['active', 'round1', 'round2', 'completed'])
         .order('scheduled_at', { ascending: false })
         .limit(1)
         .single();
@@ -276,6 +276,13 @@ function AuctionPageContent() {
     }
 
     setAuctionState(auction);
+
+    // Check if Round 1 is complete
+    if (auction.status === 'completed') {
+      setRound1Complete(true);
+      setLoading(false);
+      return auction;
+    }
 
     if (auction.current_player_id) {
       const { data: player } = await supabase
