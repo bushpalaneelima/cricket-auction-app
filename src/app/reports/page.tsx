@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 interface Manager {
   manager_id: number;
   manager_name: string;
-  team_name?: string;
   starting_budget: number;
   current_budget: number;
 }
@@ -15,7 +14,6 @@ interface Manager {
 interface TeamData {
   manager_id: number;
   manager_name: string;
-  team_name?: string;
   total_spent: number;
   budget_remaining: number;
   player_count: number;
@@ -116,7 +114,6 @@ export default function ReportsPage() {
       return {
         manager_id: mgr.manager_id,
         manager_name: mgr.manager_name,
-        team_name: mgr.team_name,
         total_spent: totalSpent,
         budget_remaining: mgr.current_budget,
         player_count: playerCount,
@@ -151,7 +148,7 @@ export default function ReportsPage() {
             player_id: tp.player_id,
             player_name: player?.player_name || 'Unknown',
             price: tp.price,
-            manager_name: manager?.team_name || manager?.manager_name || 'Unknown',
+            manager_name: manager?.manager_name || 'Unknown',
             role: player?.role || '',
             class_band: player?.class_band || '',
           };
@@ -170,7 +167,7 @@ export default function ReportsPage() {
     // Create CSV content
     const headers = ['Team', 'Players', 'Total Spent', 'Budget Remaining', 'Avg Price', 'Most Expensive'];
     const rows = teamsData.map(team => [
-      team.team_name || team.manager_name,
+      team.manager_name,
       team.player_count,
       team.total_spent,
       team.budget_remaining,
@@ -207,7 +204,7 @@ export default function ReportsPage() {
         price,
         round,
         manager_id,
-        managers (manager_name, team_name)
+        managers (manager_name)
       `)
       .eq('auction_id', auctionId)
       .order('manager_id');
@@ -227,7 +224,7 @@ export default function ReportsPage() {
     const playerMap = new Map(playersData?.map(p => [p.player_id, p]) || []);
 
     // Create detailed CSV
-    const headers = ['Manager Name', 'Team Name', 'Player Name', 'Role', 'Class', 'Country', 'Purchase Price', 'Round'];
+    const headers = ['Manager Name', 'Player Name', 'Role', 'Class', 'Country', 'Purchase Price', 'Round'];
     const rows = teamPlayers.map((tp: any) => {
       const player = playerMap.get(tp.player_id);
       const manager = tp.managers;
@@ -236,7 +233,6 @@ export default function ReportsPage() {
       
       return [
         `"${manager.manager_name}"`,
-        `"${manager.team_name || '-'}"`,
         `"${player.player_name}"`,
         `"${player.role}"`,
         `"${player.class_band}"`,
@@ -452,7 +448,7 @@ export default function ReportsPage() {
                       {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
                     </td>
                     <td style={{ padding: '15px', fontSize: '14px', color: '#02084b', fontWeight: 'bold' }}>
-                      {team.team_name || team.manager_name}
+                      {team.manager_name}
                       {team.manager_id === currentUser?.manager_id && (
                         <span style={{ color: '#666', fontSize: '11px', marginLeft: '5px' }}>(You)</span>
                       )}
