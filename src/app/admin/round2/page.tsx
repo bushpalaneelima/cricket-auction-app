@@ -101,21 +101,32 @@ export default function AdminRound2Page() {
 
     setAuctionId(auction.auction_id);
 
-    // Load unsold players
-    const { data: unsold } = await supabase
-      .from('unsold_players')
-      .select('player_id')
-      .eq('auction_id', auction.auction_id);
+// Load unsold players filtered by tournament
+const { data: unsold } = await supabase
+  .from('unsold_players')
+  .select('player_id')
+  .eq('auction_id', auction.auction_id);
 
-    if (unsold && unsold.length > 0) {
-      const unsoldIds = unsold.map(u => u.player_id);
-      const { data: players } = await supabase
-        .from('players')
-        .select('*')
-        .in('player_id', unsoldIds);
-
-      setUnsoldPlayers(players || []);
-    }
+if (unsold && unsold.length > 0) {
+  const unsoldIds = unsold.map(u => u.player_id);
+  
+  const { data: allPlayers } = await supabase
+    .from('players')
+    .select('*')
+    .in('player_id', unsoldIds);
+  
+  // Filter by tournament in JavaScript
+  let filteredPlayers = allPlayers || [];
+  
+  if (auction.tournament_filter && allPlayers) {
+    filteredPlayers = allPlayers.filter(player => {
+      const filterColumn = auction.tournament_filter as keyof typeof player;
+      return player[filterColumn] === true;
+    });
+  }
+  
+  setUnsoldPlayers(filteredPlayers);
+}
 
     await loadSelections();
   };

@@ -117,17 +117,26 @@ export default function Round2SelectPage() {
       return;
     }
 
-    const unsoldIds = unsold.map(u => u.player_id);
+const unsoldIds = unsold.map(u => u.player_id);
 
-    // Get player details
-    const { data: players } = await supabase
-      .from('players')
-      .select('*')
-      .in('player_id', unsoldIds)
-      .order('player_name');
+// Get player details
+const { data: allPlayers } = await supabase
+  .from('players')
+  .select('*')
+  .in('player_id', unsoldIds)
+  .order('player_name');
 
-    setUnsoldPlayers(players || []);
+// Filter by tournament in JavaScript
+let filteredPlayers = allPlayers || [];
 
+if (auction.tournament_filter && allPlayers) {
+  filteredPlayers = allPlayers.filter(player => {
+    const filterColumn = auction.tournament_filter as keyof typeof player;
+    return player[filterColumn] === true;
+  });
+}
+
+setUnsoldPlayers(filteredPlayers);
     // Load selections
     await loadSelections();
   };
