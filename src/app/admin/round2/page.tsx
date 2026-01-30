@@ -378,6 +378,23 @@ const loadSelections = async (currentAuctionId?: number, manager?: Manager) => {
             Admin Actions
           </h2>
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+
+            <button
+              onClick={() => window.open('/round2/select', '_blank')}
+              style={{
+              padding: '12px 30px',
+              background: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+             }}
+  >
+             🎯 Select My Players
+            </button>
+            
             <button
               onClick={handleOpenSelection}
               style={{
