@@ -188,7 +188,72 @@ export default function ReportsPage() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `auction-${auctionId}-report.csv`;
+    a.download = `auction-${auctionId}-summary.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const downloadDetailedCSV = async () => {
+    if (!auctionId) {
+      alert('No auction data available!');
+      return;
+    }
+
+    // Get all team players with full details
+    const { data: teamPlayers } = await supabase
+      .from('team_players')
+      .select(`
+        player_id,
+        price,
+        round,
+        manager_id,
+        managers (manager_name, team_name)
+      `)
+      .eq('auction_id', auctionId)
+      .order('manager_id');
+
+    if (!teamPlayers || teamPlayers.length === 0) {
+      alert('No player data to download!');
+      return;
+    }
+
+    // Get all player details
+    const playerIds = teamPlayers.map((tp: any) => tp.player_id);
+    const { data: playersData } = await supabase
+      .from('players')
+      .select('player_id, player_name, role, class_band, country')
+      .in('player_id', playerIds);
+
+    const playerMap = new Map(playersData?.map(p => [p.player_id, p]) || []);
+
+    // Create detailed CSV
+    const headers = ['Manager Name', 'Team Name', 'Player Name', 'Role', 'Class', 'Country', 'Purchase Price', 'Round'];
+    const rows = teamPlayers.map((tp: any) => {
+      const player = playerMap.get(tp.player_id);
+      const manager = tp.managers;
+      
+      if (!player || !manager) return null;
+      
+      return [
+        `"${manager.manager_name}"`,
+        `"${manager.team_name || '-'}"`,
+        `"${player.player_name}"`,
+        `"${player.role}"`,
+        `"${player.class_band}"`,
+        `"${player.country || '-'}"`,
+        tp.price,
+        tp.round || 1
+      ].join(',');
+    }).filter((row: any) => row !== null);
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+
+    // Download
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `auction-${auctionId}-players-detailed.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -252,7 +317,22 @@ export default function ReportsPage() {
                   fontWeight: '600',
                 }}
               >
-                📥 Download CSV
+                📥 Download Summary
+              </button>
+              <button
+                onClick={downloadDetailedCSV}
+                style={{
+                  padding: '10px 20px',
+                  background: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                }}
+              >
+                📋 Download Player Details
               </button>
               <button
                 onClick={() => router.push('/home')}
