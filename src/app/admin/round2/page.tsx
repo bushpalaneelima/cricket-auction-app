@@ -80,11 +80,12 @@ export default function AdminRound2Page() {
     }
 
     setCurrentUser(mgr);
-    await loadRound2Data();
+    await loadRound2Data(mgr);
     setLoading(false);
   };
 
-  const loadRound2Data = async () => {
+const loadRound2Data = async (manager?: Manager) => {
+  const userToUse = manager || currentUser;
     const { data: auction } = await supabase
       .from('auctions')
       .select('*')
@@ -128,13 +129,14 @@ if (unsold && unsold.length > 0) {
   setUnsoldPlayers(filteredPlayers);
 }
 
-    await loadSelections(auction.auction_id);
+ await loadSelections(auction.auction_id, userToUse ?? undefined);
   };
 
-const loadSelections = async (currentAuctionId?: number) => {
+const loadSelections = async (currentAuctionId?: number, manager?: Manager) => {
   const auctionIdToUse = currentAuctionId || auctionId;
+  const userToUse = manager || currentUser;
   
-  if (!auctionIdToUse || !currentUser) return;
+  if (!auctionIdToUse || !userToUse) return;
 
   // Get all managers
   const { data: managers } = await supabase
