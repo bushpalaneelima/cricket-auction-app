@@ -128,26 +128,30 @@ if (unsold && unsold.length > 0) {
   setUnsoldPlayers(filteredPlayers);
 }
 
-    await loadSelections();
+    await loadSelections(auction.auction_id);
   };
 
-  const loadSelections = async () => {
-    if (!auctionId) return;
+const loadSelections = async (currentAuctionId?: number) => {
+  const auctionIdToUse = currentAuctionId || auctionId;
+  
+  if (!auctionIdToUse || !currentUser) return;
 
-    // Get all managers
-    const { data: managers } = await supabase
-      .from('managers')
-      .select('*')
-      .gt('starting_budget', 0)
-      .order('manager_name');
+  // Get all managers
+  const { data: managers } = await supabase
+    .from('managers')
+    .select('*')
+    .gt('starting_budget', 0)
+    .order('manager_name');
 
-    if (!managers) return;
+  if (!managers) return;
 
-    // Get all selections
-    const { data: allSelections } = await supabase
-      .from('round2_selections')
-      .select('manager_id, player_id')
-      .eq('auction_id', auctionId);
+  // Get all selections
+  const { data: allSelections } = await supabase
+    .from('round2_selections')
+    .select('manager_id, player_id')
+    .eq('auction_id', auctionIdToUse);
+
+  // ... rest of the function stays the same
 
     const selectionMap = new Map<number, number[]>();
     (allSelections || []).forEach(s => {
