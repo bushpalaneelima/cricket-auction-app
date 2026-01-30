@@ -267,6 +267,7 @@ export default function HomePage() {
               View your squad
             </p>
             <button
+              onClick={() => router.push('/team')}
               style={{
                 padding: '8px 16px',
                 background: '#02084b',
@@ -294,6 +295,7 @@ export default function HomePage() {
               Download auction data
             </p>
             <button
+              onClick={() => router.push('/reports')}  // ← CORRECT!
               style={{
                 padding: '8px 16px',
                 background: '#6a1b9a',
