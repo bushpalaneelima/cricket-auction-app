@@ -583,7 +583,9 @@ function AuctionPageContent() {
       
       const playersToCalculate = Math.max(missingCount, playersStillNeeded);
       
-      totalMinimumCost = playersToCalculate * 60;
+      // Round 1: Need 60 pts per player | Round 2: Need only 5 pts per player (bid increments)
+     const costPerPlayer = auctionState?.status === 'round2' ? 5 : 60;
+     totalMinimumCost = playersToCalculate * costPerPlayer;
       
       if (budgetAfterBid < totalMinimumCost) {
         alert(
