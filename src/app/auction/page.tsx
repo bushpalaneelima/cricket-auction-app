@@ -449,21 +449,31 @@ function AuctionPageContent() {
 
       console.log('No players in current category, auto-progressing...');
       
+    // Platinum players in random order, Gold/Silver sequential
+    const platinumRoles = [
+      { class: 'Platinum', role: 'Batsman' },
+      { class: 'Platinum', role: 'Bowler' },
+      { class: 'Platinum', role: 'All-rounder' },
+      { class: 'Platinum', role: 'Wicket Keeper' },
+    ];
+
+    // Shuffle platinum roles randomly (Fisher-Yates algorithm)
+      for (let i = platinumRoles.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [platinumRoles[i], platinumRoles[j]] = [platinumRoles[j], platinumRoles[i]];
+      }
+
       const categories = [
-        { class: 'Platinum', role: 'Batsman' },
-        { class: 'Platinum', role: 'Bowler' },
-        { class: 'Platinum', role: 'All-rounder' },
-        { class: 'Platinum', role: 'Wicket Keeper' },
+        ...platinumRoles, // Random Platinum
         { class: 'Gold', role: 'Batsman' },
         { class: 'Gold', role: 'Bowler' },
         { class: 'Gold', role: 'All-rounder' },
         { class: 'Gold', role: 'Wicket Keeper' },
         { class: 'Silver', role: 'Batsman' },
-        { class: 'Silver', role: 'Bowler' },
+        {  class: 'Silver', role: 'Bowler' },
         { class: 'Silver', role: 'All-rounder' },
         { class: 'Silver', role: 'Wicket Keeper' },
       ];
-
       const currentIndex = categories.findIndex(
         cat => cat.class === auction.class_filter && cat.role === auction.role_filter
       );
