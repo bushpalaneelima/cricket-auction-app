@@ -58,6 +58,8 @@ function AuctionPageContent() {
   const auctionIdParam = searchParams.get('id');
   
   const [loading, setLoading] = useState(true);
+  const [totalPlayers, setTotalPlayers] = useState(0);
+  const [playersSold, setPlayersSold] = useState(0);
   const [currentUser, setCurrentUser] = useState<Manager | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [auctionState, setAuctionState] = useState<AuctionState | null>(null);
@@ -69,7 +71,7 @@ function AuctionPageContent() {
   
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
-
+  
   const shouldSellRef = useRef(false);
   const isProcessingSaleRef = useRef(false);
 
@@ -137,6 +139,10 @@ function AuctionPageContent() {
         if (currentUser) {
           refreshCurrentUser();
           loadMyTeam(currentUser.manager_id);
+          // Update player count when player is sold
+          if (auctionState) {
+            loadPlayerStats(auctionState);
+          }
         }
       })
       .on('postgres_changes', {
@@ -281,6 +287,7 @@ function AuctionPageContent() {
     if (auction.status === 'completed') {
       setRound1Complete(true);
       setLoading(false);
+      await loadPlayerStats(auction);
       return auction;
     }
 
@@ -310,53 +317,89 @@ function AuctionPageContent() {
       setCurrentBidder(null);
     }
     
+    await loadPlayerStats(auction);
     return auction;
   };
 
-const checkAuth = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) {
-    router.push('/login');
-    return;
-  }
-  
-  const { data: mgr } = await supabase
-    .from('managers')
-    .select('*')
-    .eq('email', session.user.email)
-    .single();
-  
-  if (!mgr) {
-    router.push('/login');
-    return;
-  }
-  
-  setCurrentUser(mgr);
-  
-  const auction = await loadAuctionState();
-  
-  if (auction) {
-    // CHECK IF MANAGER IS A PARTICIPANT
-    const { data: participant } = await supabase
-      .from('auction_participants')
-      .select('participant_id')
-      .eq('auction_id', auction.auction_id)
-      .eq('manager_id', mgr.manager_id)
-      .single();
-    
-    if (!participant) {
-      // Not a participant - redirect to home
-      alert('⚠️ You are not registered for this auction!\n\nPlease join the lobby and click "I\'m Ready" before the auction starts.');
-      router.push('/home');
+  const loadPlayerStats = async (auction: AuctionState) => {
+    try {
+      // Get total players for this auction's tournament filter
+      let totalCount = 0;
+      
+      if (auction.tournament_filter) {
+        const { count } = await supabase
+          .from('players')
+          .select('*', { count: 'exact', head: true })
+          .eq(auction.tournament_filter, true);
+        
+        totalCount = count || 0;
+      } else {
+        const { count } = await supabase
+          .from('players')
+          .select('*', { count: 'exact', head: true });
+        
+        totalCount = count || 0;
+      }
+      
+      setTotalPlayers(totalCount);
+      
+      // Get sold players count
+      const { count: soldCount } = await supabase
+        .from('team_players')
+        .select('*', { count: 'exact', head: true })
+        .eq('auction_id', auction.auction_id);
+      
+      setPlayersSold(soldCount || 0);
+    } catch (error) {
+      console.error('Error loading player stats:', error);
+    }
+  };
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      router.push('/login');
       return;
     }
     
-    // Participant verified - load team
-    loadMyTeam(mgr.manager_id, auction);
-  }
-  
-  setLoading(false);
-};
+    const { data: mgr } = await supabase
+      .from('managers')
+      .select('*')
+      .eq('email', session.user.email)
+      .single();
+    
+    if (!mgr) {
+      router.push('/login');
+      return;
+    }
+    
+    setCurrentUser(mgr);
+    
+    const auction = await loadAuctionState();
+    
+    if (auction) {
+      // CHECK IF MANAGER IS A PARTICIPANT
+      const { data: participant } = await supabase
+        .from('auction_participants')
+        .select('participant_id')
+        .eq('auction_id', auction.auction_id)
+        .eq('manager_id', mgr.manager_id)
+        .single();
+      
+      if (!participant) {
+        // Not a participant - redirect to home
+        alert('⚠️ You are not registered for this auction!\n\nPlease join the lobby and click "I\'m Ready" before the auction starts.');
+        router.push('/home');
+        return;
+      }
+      
+      // Participant verified - load team
+      loadMyTeam(mgr.manager_id, auction);
+    }
+    
+    setLoading(false);
+  };
+
   const loadNextPlayer = async (auction: AuctionState) => {
     try {
       console.log('📥 Loading next player...');
@@ -466,15 +509,15 @@ const checkAuth = async () => {
 
       console.log('No players in current category, auto-progressing...');
       
-    // Platinum players in random order, Gold/Silver sequential
-    const platinumRoles = [
-      { class: 'Platinum', role: 'Batsman' },
-      { class: 'Platinum', role: 'Bowler' },
-      { class: 'Platinum', role: 'All-rounder' },
-      { class: 'Platinum', role: 'Wicket Keeper' },
-    ];
+      // Platinum players in random order, Gold/Silver sequential
+      const platinumRoles = [
+        { class: 'Platinum', role: 'Batsman' },
+        { class: 'Platinum', role: 'Bowler' },
+        { class: 'Platinum', role: 'All-rounder' },
+        { class: 'Platinum', role: 'Wicket Keeper' },
+      ];
 
-    // Shuffle platinum roles randomly (Fisher-Yates algorithm)
+      // Shuffle platinum roles randomly (Fisher-Yates algorithm)
       for (let i = platinumRoles.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [platinumRoles[i], platinumRoles[j]] = [platinumRoles[j], platinumRoles[i]];
@@ -487,10 +530,11 @@ const checkAuth = async () => {
         { class: 'Gold', role: 'All-rounder' },
         { class: 'Gold', role: 'Wicket Keeper' },
         { class: 'Silver', role: 'Batsman' },
-        {  class: 'Silver', role: 'Bowler' },
+        { class: 'Silver', role: 'Bowler' },
         { class: 'Silver', role: 'All-rounder' },
         { class: 'Silver', role: 'Wicket Keeper' },
       ];
+
       const currentIndex = categories.findIndex(
         cat => cat.class === auction.class_filter && cat.role === auction.role_filter
       );
@@ -611,8 +655,8 @@ const checkAuth = async () => {
       const playersToCalculate = Math.max(missingCount, playersStillNeeded);
       
       // Round 1: Need 60 pts per player | Round 2: Need only 5 pts per player (bid increments)
-     const costPerPlayer = auctionState?.status === 'round2' ? 5 : 60;
-     totalMinimumCost = playersToCalculate * costPerPlayer;
+      const costPerPlayer = auctionState?.status === 'round2' ? 5 : 60;
+      totalMinimumCost = playersToCalculate * costPerPlayer;
       
       if (budgetAfterBid < totalMinimumCost) {
         alert(
@@ -1177,6 +1221,46 @@ const checkAuth = async () => {
               🔥 ROUND 2 AUCTION - Base Price: 0 pts
             </div>
           )}
+
+          {/* Player Count Stats */}
+          <div style={{
+            background: 'linear-gradient(135deg, #02084b 0%, #3E5B99 100%)',
+            color: 'white',
+            padding: '12px',
+            borderRadius: '8px',
+            marginBottom: '15px',
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '8px',
+            }}>
+              <div>
+                <span style={{ fontSize: '14px', opacity: 0.9 }}>Progress:</span>
+                <span style={{ fontSize: '18px', fontWeight: 'bold', marginLeft: '8px' }}>
+                  {playersSold} / {totalPlayers}
+                </span>
+              </div>
+              <div style={{ fontSize: '14px', opacity: 0.9 }}>
+                {totalPlayers - playersSold} remaining
+              </div>
+            </div>
+            <div style={{
+              width: '100%',
+              height: '8px',
+              background: 'rgba(255,255,255,0.3)',
+              borderRadius: '4px',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                width: `${totalPlayers > 0 ? (playersSold / totalPlayers) * 100 : 0}%`,
+                height: '100%',
+                background: '#4caf50',
+                transition: 'width 0.3s ease',
+              }}></div>
+            </div>
+          </div>
 
           <div style={{ textAlign: 'center', marginBottom: '15px' }}>
             <div style={{
