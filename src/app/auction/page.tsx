@@ -313,33 +313,50 @@ function AuctionPageContent() {
     return auction;
   };
 
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-
-    const { data: mgr } = await supabase
-      .from('managers')
-      .select('*')
-      .eq('email', session.user.email)
+const checkAuth = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    router.push('/login');
+    return;
+  }
+  
+  const { data: mgr } = await supabase
+    .from('managers')
+    .select('*')
+    .eq('email', session.user.email)
+    .single();
+  
+  if (!mgr) {
+    router.push('/login');
+    return;
+  }
+  
+  setCurrentUser(mgr);
+  
+  const auction = await loadAuctionState();
+  
+  if (auction) {
+    // CHECK IF MANAGER IS A PARTICIPANT
+    const { data: participant } = await supabase
+      .from('auction_participants')
+      .select('participant_id')
+      .eq('auction_id', auction.auction_id)
+      .eq('manager_id', mgr.manager_id)
       .single();
-
-    if (!mgr) {
-      router.push('/login');
+    
+    if (!participant) {
+      // Not a participant - redirect to home
+      alert('⚠️ You are not registered for this auction!\n\nPlease join the lobby and click "I\'m Ready" before the auction starts.');
+      router.push('/home');
       return;
     }
-
-    setCurrentUser(mgr);
-    const auction = await loadAuctionState();
-    if (auction) {
-      loadMyTeam(mgr.manager_id, auction);
-    }
-    setLoading(false);
-  };
-
+    
+    // Participant verified - load team
+    loadMyTeam(mgr.manager_id, auction);
+  }
+  
+  setLoading(false);
+};
   const loadNextPlayer = async (auction: AuctionState) => {
     try {
       console.log('📥 Loading next player...');
