@@ -513,70 +513,88 @@ function AuctionPageContent() {
 
       console.log('No players in current category, auto-progressing...');
       
-      // Platinum players in random order, Gold/Silver sequential
-      const platinumRoles = [
-        { class: 'Platinum', role: 'Batsman' },
-        { class: 'Platinum', role: 'Bowler' },
-        { class: 'Platinum', role: 'All-rounder' },
-        { class: 'Platinum', role: 'Wicket Keeper' },
-      ];
+      
 
-      // Shuffle platinum roles randomly (Fisher-Yates algorithm)
-      for (let i = platinumRoles.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [platinumRoles[i], platinumRoles[j]] = [platinumRoles[j], platinumRoles[i]];
-      }
 
-      const categories = [
-        ...platinumRoles, // Random Platinum
-        { class: 'Gold', role: 'Batsman' },
-        { class: 'Gold', role: 'Bowler' },
-        { class: 'Gold', role: 'All-rounder' },
-        { class: 'Gold', role: 'Wicket Keeper' },
-        { class: 'Silver', role: 'Batsman' },
-        { class: 'Silver', role: 'Bowler' },
-        { class: 'Silver', role: 'All-rounder' },
-        { class: 'Silver', role: 'Wicket Keeper' },
-      ];
+       const categoryOrder = [
+  { class_band: 'Platinum', role: 'Batsman' },
+  { class_band: 'Platinum', role: 'Bowler' },
+  { class_band: 'Platinum', role: 'All-rounder' },
+  { class_band: 'Platinum', role: 'Wicket Keeper' },
 
-      const currentIndex = categories.findIndex(
-        cat => cat.class === auction.class_filter && cat.role === auction.role_filter
-      );
+  { class_band: 'Gold', role: 'Batsman' },
+  { class_band: 'Gold', role: 'Bowler' },
+  { class_band: 'Gold', role: 'All-rounder' },
+  { class_band: 'Gold', role: 'Wicket Keeper' },
 
-      if (currentIndex >= 0 && currentIndex < categories.length - 1) {
-        const nextCategory = categories[currentIndex + 1];
-        
-        console.log(`Moving from ${auction.class_filter} ${auction.role_filter} to ${nextCategory.class} ${nextCategory.role}`);
-        
-        await supabase
-          .from('auctions')
-          .update({
-            class_filter: nextCategory.class,
-            role_filter: nextCategory.role,
-          })
-          .eq('auction_id', auction.auction_id);
+  { class_band: 'Silver', role: 'Batsman' },
+  { class_band: 'Silver', role: 'Bowler' },
+  { class_band: 'Silver', role: 'All-rounder' },
+  { class_band: 'Silver', role: 'Wicket Keeper' },
+];
 
-        const updatedAuction = { ...auction, class_filter: nextCategory.class, role_filter: nextCategory.role };
-        await loadNextPlayer(updatedAuction);
-        
-      } else {
-        console.log('🎉 Round 1 Complete! All categories finished!');
-        
-        // Update auction status to 'completed'
-        await supabase
-          .from('auctions')
-          .update({ 
-            status: 'completed',
-            current_player_id: null,
-            current_bid_amount: 0,
-            current_bid_manager_id: null,
-            is_paused: true,
-          })
-          .eq('auction_id', auction.auction_id);
-        
-        setRound1Complete(true);
-        setCurrentPlayer(null);
-      }
+const currentIndex = categoryOrder.findIndex(
+  (cat) => cat.class_band === auction.class_filter && cat.role === auction.role_filter
+);
+
+// if current filter is empty/invalid, start from first
+if (currentIndex === -1) {
+  const first = categoryOrder[0];
+
+  await supabase
+    .from('auctions')
+    .update({ class_filter: first.class_band, role_filter: first.role })
+    .eq('auction_id', auction.auction_id);
+
+  await loadNextPlayer({ ...auction, class_filter: first.class_band, role_filter: first.role });
+  return;
+}
+
+if (currentIndex < categoryOrder.length - 1) {
+  const nextCategory = categoryOrder[currentIndex + 1];
+
+  await supabase
+    .from('auctions')
+    .update({
+      class_filter: nextCategory.class_band,
+      role_filter: nextCategory.role,
+    })
+    .eq('auction_id', auction.auction_id);
+
+  await loadNextPlayer({
+    ...auction,
+    class_filter: nextCategory.class_band,
+    role_filter: nextCategory.role,
+  });
+
+  return;
+}
+
+    // Round 1 finished
+  await supabase
+    .from('auctions')
+    .update({
+      status: 'completed',
+      current_player_id: null,
+      current_bid_amount: 0,
+      current_bid_manager_id: null,
+      is_paused: true,
+    })
+    .eq('auction_id', auction.auction_id);
+
+    setRound1Complete(true);
+  setCurrentPlayer(null);
+  return;
+
+     
+      
+
+
+
+
+
+
+
 
     } catch (error) {
       console.error('Error loading player:', error);
