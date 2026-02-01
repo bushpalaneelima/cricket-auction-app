@@ -463,12 +463,16 @@ function AuctionPageContent() {
           .from('players')
           .select('*');
 
-        if (auction.class_filter) {
-          queryBuilder = queryBuilder.eq('class_band', auction.class_filter);
+          // Apply tournament filter first
+          if (auction.tournament_filter) {
+            queryBuilder = queryBuilder.eq(auction.tournament_filter, true);
         }
-        
-        if (auction.role_filter) {
-          queryBuilder = queryBuilder.eq('role', auction.role_filter);
+
+          if (auction.class_filter) {
+            queryBuilder = queryBuilder.eq('class_band', auction.class_filter);
+        }
+          if (auction.role_filter) {
+            queryBuilder = queryBuilder.eq('role', auction.role_filter);
         }
 
         if (excludedPlayerIds.length > 0) {
