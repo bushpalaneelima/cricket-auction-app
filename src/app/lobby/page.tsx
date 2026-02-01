@@ -23,6 +23,7 @@ export default function LobbyPage() {
   const [managers, setManagers] = useState<Manager[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [activeAuction, setActiveAuction] = useState<any>(null);
+  const [auctionId, setAuctionId] = useState<number | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -123,10 +124,17 @@ export default function LobbyPage() {
       .single();
 
     setActiveAuction(data);
+    
+    // Set auction ID for participant tracking
+    if (data) {
+      setAuctionId(data.auction_id);
+    } else {
+      setAuctionId(null);
+    }
   };
   
   const toggleReady = async () => {
-    if (!currentUser) return;
+    if (!currentUser || !auctionId) return;
     
     const newReadyState = !isReady;
     setIsReady(newReadyState);
@@ -138,6 +146,34 @@ export default function LobbyPage() {
         updated_at: new Date().toISOString()
       })
       .eq('manager_id', currentUser.manager_id);
+    
+    // Add/remove from auction participants
+    if (newReadyState) {
+      // Add to auction_participants (insert only if not exists)
+      const { error } = await supabase
+        .from('auction_participants')
+        .upsert({
+          auction_id: auctionId,
+          manager_id: currentUser.manager_id,
+        }, {
+          onConflict: 'auction_id,manager_id'
+        });
+
+      if (error) {
+        console.error('Error adding participant:', error);
+      } else {
+        console.log('✅ Added to auction participants');
+      }
+    } else {
+      // Remove from auction_participants
+      await supabase
+        .from('auction_participants')
+        .delete()
+        .eq('auction_id', auctionId)
+        .eq('manager_id', currentUser.manager_id);
+
+      console.log('❌ Removed from auction participants');
+    }
     
     loadManagers();
   };
