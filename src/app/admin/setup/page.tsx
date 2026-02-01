@@ -27,6 +27,21 @@ export default function AuctionSetupPage() {
     'Other'
   ];
 
+  // ✅ MAPPING FUNCTION - Converts display name to database column name
+  const getTournamentColumn = (displayName: string): string => {
+    const mapping: { [key: string]: string } = {
+      'T20 World Cup': 't20_wc_active',
+      'ODI World Cup': 'odi_wc_active',
+      'Indian Premier League': 'ipl_active',
+      'Champions Trophy': 'ct_active',
+      'Women Premier League': 'wpl_active',
+      'WODI World Cup': 'wodi_wc_active',
+      'WT20 World Cup': 'wt20_wc_active',
+      'Other': ''
+    };
+    return mapping[displayName] || '';
+  };
+
   useEffect(() => {
     checkAuth();
   }, []);
@@ -90,13 +105,15 @@ export default function AuctionSetupPage() {
 
       console.log('✅ Manager budgets reset');
 
-      // STEP 2: Create new auction
+      // STEP 2: Create new auction with CORRECT tournament column
+      const tournamentColumn = getTournamentColumn(tournament);
+      
       const { data: auction, error: auctionError } = await supabase
         .from('auctions')
         .insert([
           {
             auction_name: auctionName,
-            tournament_filter: tournament,
+            tournament_filter: tournamentColumn,  // ✅ FIXED - Now stores "t20_wc_active" instead of "T20 World Cup"
             class_filter: playerClass,
             role_filter: role,
             scheduled_at: new Date().toISOString(),
@@ -114,8 +131,9 @@ export default function AuctionSetupPage() {
       if (auctionError) throw auctionError;
 
       console.log('✅ Auction created:', auction.auction_id);
+      console.log('✅ Tournament filter set to:', tournamentColumn);
 
-      alert(`✅ Auction "${auctionName}" created!\n\nAuction ID: ${auction.auction_id}\nAll managers reset to 1000 pts.`);
+      alert(`✅ Auction "${auctionName}" created!\n\nAuction ID: ${auction.auction_id}\nTournament: ${tournament}\nFilter: ${tournamentColumn}\nAll managers reset to 1000 pts.`);
 
       // Redirect to auction page
       router.push('/auction');
@@ -212,7 +230,7 @@ export default function AuctionSetupPage() {
               type="text"
               value={auctionName}
               onChange={(e) => setAuctionName(e.target.value)}
-              placeholder="e.g., IPL 2026 Mega Auction"
+              placeholder="e.g., T20 World Cup 2026"
               style={{
                 width: '100%',
                 padding: '12px',
@@ -288,9 +306,6 @@ export default function AuctionSetupPage() {
                 <option value="Platinum">Platinum</option>
                 <option value="Gold">Gold</option>
                 <option value="Silver">Silver</option>
-                <option value="Copper">Copper</option>
-                <option value="Bronze">Bronze</option>
-                <option value="Stone">Stone</option>
               </select>
             </div>
 
@@ -339,7 +354,7 @@ export default function AuctionSetupPage() {
             margin: 0,
             lineHeight: '1.5'
           }}>
-            💡 Auction will progress automatically through all 6 classes (Platinum → Gold → Silver → Copper → Bronze → Stone) and all 4 roles (Batsmen → Bowlers → All-rounders → Wicket Keepers)
+            💡 Auction will progress automatically through all classes (Platinum → Gold → Silver) and all 4 roles (Batsmen → Bowlers → All-rounders → Wicket Keepers)
           </p>
         </div>
 
