@@ -180,79 +180,91 @@ function AuctionPageContent() {
   }, [auctionState?.auction_id, currentParticipant?.participant_id]);
 
   const refreshCurrentParticipant = async () => {
-    if (!currentParticipant) return;
-    
-    const { data: updatedParticipant } = await supabase
-      .from('auction_participants')
-      .select(`
-        participant_id,
+  if (!currentParticipant) return;
+  
+  const { data: updatedParticipant, error } = await supabase
+    .from('auction_participants')
+    .select(`
+      participant_id,
+      manager_id,
+      current_budget,
+      starting_budget,
+      managers!inner (
         manager_id,
-        current_budget,
-        starting_budget,
-        managers!inner (
-          manager_id,
-          manager_name,
-          email,
-          role,
-          team_name
-        )
-      `)
-      .eq('participant_id', currentParticipant.participant_id)
+        manager_name,
+        email,
+        role,
+        team_name
+      )
+    `)
+    .eq('participant_id', currentParticipant.participant_id)
+    .single();
+  
+  if (error) {
+    console.error('Error refreshing participant:', error);
+    return;
+  }
+  
+  if (updatedParticipant) {
+    setCurrentParticipant(updatedParticipant as any);
+  }
+};
+
+useEffect(() => {
+  if (!auctionState || !access?.canControl) return;
+  if (auctionState.is_paused || !currentPlayer) return;
+
+  console.log('⏰ Timer started for player:', currentPlayer.player_name);
+
+  const interval = setInterval(async () => {
+    const { data: currentAuction } = await supabase
+      .from('auctions')
+      .select('timer_seconds, is_paused')
+      .eq('auction_id', auctionState.auction_id)
       .single();
+
+    if (!currentAuction) return;
     
-    if (updatedParticipant) {
-      setCurrentParticipant(updatedParticipant as any);
+    // Check if paused
+    if (currentAuction.is_paused) {
+      clearInterval(interval);
+      return;
     }
-  };
 
-  useEffect(() => {
-    if (!auctionState || !access?.canControl) return;
-    if (auctionState.is_paused || !currentPlayer) return;
+    const newTime = currentAuction.timer_seconds - 1;
 
-    console.log('⏰ Timer started');
-
-    const interval = setInterval(async () => {
-      const { data: currentAuction } = await supabase
+    if (newTime <= 0) {
+      clearInterval(interval);
+      
+      const { data: finalCheck } = await supabase
         .from('auctions')
-        .select('timer_seconds')
+        .select('is_bid_locked, timer_seconds')
         .eq('auction_id', auctionState.auction_id)
         .single();
-
-      if (!currentAuction) return;
-
-      const newTime = currentAuction.timer_seconds - 1;
-
-      if (newTime <= 0) {
-        clearInterval(interval);
-        
-        const { data: finalCheck } = await supabase
-          .from('auctions')
-          .select('is_bid_locked, timer_seconds')
-          .eq('auction_id', auctionState.auction_id)
-          .single();
-        
-        if (finalCheck && (finalCheck.is_bid_locked || finalCheck.timer_seconds > 5)) {
-          return;
-        }
-        
-        await supabase
-          .from('auctions')
-          .update({ timer_seconds: 0 })
-          .eq('auction_id', auctionState.auction_id);
-        
-        await handlePlayerSold();
-      } else {
-        await supabase
-          .from('auctions')
-          .update({ timer_seconds: newTime })
-          .eq('auction_id', auctionState.auction_id);
+      
+      if (finalCheck && (finalCheck.is_bid_locked || finalCheck.timer_seconds > 5)) {
+        return;
       }
-    }, 1000);
+      
+      await supabase
+        .from('auctions')
+        .update({ timer_seconds: 0 })
+        .eq('auction_id', auctionState.auction_id);
+      
+      await handlePlayerSold();
+    } else {
+      await supabase
+        .from('auctions')
+        .update({ timer_seconds: newTime })
+        .eq('auction_id', auctionState.auction_id);
+    }
+  }, 1000);
 
-    return () => {
-      clearInterval(interval);
-    };
-  }, [auctionState?.auction_id, auctionState?.is_paused, currentPlayer?.player_id, access?.canControl]);
+  return () => {
+    console.log('⏰ Timer cleanup');
+    clearInterval(interval);
+  };
+}, [auctionState?.auction_id, currentPlayer?.player_id]); // ✅ REMOVED is_paused and canControl
 
   const loadAuctionState = async () => {
     let auction = null;
@@ -865,7 +877,8 @@ function AuctionPageContent() {
   };
 
   const handlePause = async () => {
-    if (!auctionState || !access?.canControl) return;
+    if (!auctionState) return;
+    if (!access?.canControl) return; // Only admins run the timer
 
     await supabase
       .from('auctions')
