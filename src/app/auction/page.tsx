@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { getAuctionAccess } from '../lib/accessControl';
 
 interface Player {
   player_id: number;
@@ -19,21 +20,25 @@ interface TeamPlayer extends Player {
   price: number;
 }
 
-interface Manager {
+interface Participant {
+  participant_id: number;
   manager_id: number;
-  manager_name: string;
-  email: string;
-  role: string;
   current_budget: number;
   starting_budget: number;
-  team_name?: string;
+  managers: {
+    manager_id: number;
+    manager_name: string;
+    email: string;
+    role: string;
+    team_name?: string;
+  };
 }
 
 interface AuctionState {
   auction_id: number;
   current_player_id: number | null;
   current_bid_amount: number;
-  current_bid_manager_id: number | null;
+  current_bid_participant_id: number | null;
   timer_seconds: number;
   is_paused: boolean;
   status: string;
@@ -60,10 +65,12 @@ function AuctionPageContent() {
   const [loading, setLoading] = useState(true);
   const [totalPlayers, setTotalPlayers] = useState(0);
   const [playersSold, setPlayersSold] = useState(0);
-  const [currentUser, setCurrentUser] = useState<Manager | null>(null);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [access, setAccess] = useState<any>(null);
+  const [currentParticipant, setCurrentParticipant] = useState<Participant | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [auctionState, setAuctionState] = useState<AuctionState | null>(null);
-  const [currentBidder, setCurrentBidder] = useState<Manager | null>(null);
+  const [currentBidder, setCurrentBidder] = useState<Participant | null>(null);
   const [myTeam, setMyTeam] = useState<TeamPlayer[]>([]);
   const [isFrozen, setIsFrozen] = useState(false);
   const [freezeMessage, setFreezeMessage] = useState('');
@@ -87,7 +94,7 @@ function AuctionPageContent() {
   }, [auctionState?.class_filter, auctionState?.role_filter]);
 
   useEffect(() => {
-    if (!auctionState || !currentUser) return;
+    if (!auctionState || !currentParticipant) return;
 
     const channel = supabase
       .channel('auction-updates')
@@ -103,14 +110,26 @@ function AuctionPageContent() {
           const newAuction = payload.new as AuctionState;
           setAuctionState({...newAuction});
           
-          if (newAuction.current_bid_manager_id) {
+          if (newAuction.current_bid_participant_id) {
             supabase
-              .from('managers')
-              .select('*')
-              .eq('manager_id', newAuction.current_bid_manager_id)
+              .from('auction_participants')
+              .select(`
+                participant_id,
+                manager_id,
+                current_budget,
+                starting_budget,
+                managers!inner (
+                  manager_id,
+                  manager_name,
+                  email,
+                  role,
+                  team_name
+                )
+              `)
+              .eq('participant_id', newAuction.current_bid_participant_id)
               .single()
               .then(({ data }) => {
-                setCurrentBidder(data);
+                setCurrentBidder(data as any);
               });
           } else {
             setCurrentBidder(null);
@@ -134,12 +153,11 @@ function AuctionPageContent() {
         event: 'INSERT',
         schema: 'public',
         table: 'team_players',
-      }, (payload) => {
-        console.log('Player sold:', payload);
-        if (currentUser) {
-          refreshCurrentUser();
-          loadMyTeam(currentUser.manager_id);
-          // Update player count when player is sold
+      }, () => {
+        console.log('Player sold');
+        if (currentParticipant) {
+          refreshCurrentParticipant();
+          loadMyTeam(currentParticipant.participant_id);
           if (auctionState) {
             loadPlayerStats(auctionState);
           }
@@ -148,39 +166,50 @@ function AuctionPageContent() {
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
-        table: 'managers',
-        filter: `manager_id=eq.${currentUser.manager_id}`,
-      }, (payload) => {
-        console.log('Manager updated:', payload);
-        refreshCurrentUser();
+        table: 'auction_participants',
+        filter: `participant_id=eq.${currentParticipant.participant_id}`,
+      }, () => {
+        console.log('Participant updated');
+        refreshCurrentParticipant();
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [auctionState?.auction_id, currentUser?.manager_id]);
+  }, [auctionState?.auction_id, currentParticipant?.participant_id]);
 
-  const refreshCurrentUser = async () => {
-    if (!currentUser) return;
+  const refreshCurrentParticipant = async () => {
+    if (!currentParticipant) return;
     
-    const { data: updatedUser } = await supabase
-      .from('managers')
-      .select('*')
-      .eq('manager_id', currentUser.manager_id)
+    const { data: updatedParticipant } = await supabase
+      .from('auction_participants')
+      .select(`
+        participant_id,
+        manager_id,
+        current_budget,
+        starting_budget,
+        managers!inner (
+          manager_id,
+          manager_name,
+          email,
+          role,
+          team_name
+        )
+      `)
+      .eq('participant_id', currentParticipant.participant_id)
       .single();
     
-    if (updatedUser) {
-      setCurrentUser(updatedUser);
+    if (updatedParticipant) {
+      setCurrentParticipant(updatedParticipant as any);
     }
   };
 
   useEffect(() => {
-    if (!auctionState || !currentUser) return;
-    if (currentUser.role !== 'admin') return;
+    if (!auctionState || !access?.canControl) return;
     if (auctionState.is_paused || !currentPlayer) return;
 
-    console.log('⏰ Timer useEffect started for player:', currentPlayer.player_name, '(ID:', currentPlayer.player_id, ')');
+    console.log('⏰ Timer started');
 
     const interval = setInterval(async () => {
       const { data: currentAuction } = await supabase
@@ -189,16 +218,11 @@ function AuctionPageContent() {
         .eq('auction_id', auctionState.auction_id)
         .single();
 
-      if (!currentAuction) {
-        console.log('⚠️ Could not fetch auction for timer tick');
-        return;
-      }
+      if (!currentAuction) return;
 
       const newTime = currentAuction.timer_seconds - 1;
-      console.log('⏱️ Timer tick:', newTime, 'for player:', currentPlayer.player_name);
 
       if (newTime <= 0) {
-        console.log('🛑 Timer hit 0 for:', currentPlayer.player_name);
         clearInterval(interval);
         
         const { data: finalCheck } = await supabase
@@ -208,7 +232,6 @@ function AuctionPageContent() {
           .single();
         
         if (finalCheck && (finalCheck.is_bid_locked || finalCheck.timer_seconds > 5)) {
-          console.log('⚠️ Bid detected at last second - not selling!');
           return;
         }
         
@@ -217,7 +240,6 @@ function AuctionPageContent() {
           .update({ timer_seconds: 0 })
           .eq('auction_id', auctionState.auction_id);
         
-        console.log('🔔 Calling handlePlayerSold directly...');
         await handlePlayerSold();
       } else {
         await supabase
@@ -228,25 +250,15 @@ function AuctionPageContent() {
     }, 1000);
 
     return () => {
-      console.log('🧹 Cleaning up timer interval for player:', currentPlayer.player_name);
       clearInterval(interval);
     };
-  }, [auctionState?.auction_id, auctionState?.is_paused, currentPlayer?.player_id, currentUser?.role]);
-
-  useEffect(() => {
-    if (shouldSellRef.current && auctionState && currentPlayer) {
-      console.log('🔔 Executing player sale from ref...');
-      shouldSellRef.current = false;
-      handlePlayerSold();
-    }
-  }, [shouldSellRef.current]);
+  }, [auctionState?.auction_id, auctionState?.is_paused, currentPlayer?.player_id, access?.canControl]);
 
   const loadAuctionState = async () => {
     let auction = null;
 
     if (auctionIdParam) {
       const auctionId = parseInt(auctionIdParam);
-      console.log('📥 Loading specific auction:', auctionId);
 
       const { data: specificAuction } = await supabase
         .from('auctions')
@@ -256,14 +268,12 @@ function AuctionPageContent() {
 
       if (!specificAuction) {
         alert(`Auction #${auctionId} not found!`);
-        router.push('/history');
+        router.push('/admin/history');
         return;
       }
 
       auction = specificAuction;
     } else {
-      console.log('📥 Loading most recent active auction');
-
       const { data: activeAuction } = await supabase
         .from('auctions')
         .select('*')
@@ -283,7 +293,6 @@ function AuctionPageContent() {
 
     setAuctionState(auction);
 
-    // Check if Round 1 is complete
     if (auction.status === 'completed') {
       setRound1Complete(true);
       setLoading(false);
@@ -305,14 +314,26 @@ function AuctionPageContent() {
       }
     }
 
-    if (auction.current_bid_manager_id) {
+    if (auction.current_bid_participant_id) {
       const { data: bidder } = await supabase
-        .from('managers')
-        .select('*')
-        .eq('manager_id', auction.current_bid_manager_id)
+        .from('auction_participants')
+        .select(`
+          participant_id,
+          manager_id,
+          current_budget,
+          starting_budget,
+          managers!inner (
+            manager_id,
+            manager_name,
+            email,
+            role,
+            team_name
+          )
+        `)
+        .eq('participant_id', auction.current_bid_participant_id)
         .single();
 
-      setCurrentBidder(bidder);
+      setCurrentBidder(bidder as any);
     } else {
       setCurrentBidder(null);
     }
@@ -323,7 +344,6 @@ function AuctionPageContent() {
 
   const loadPlayerStats = async (auction: AuctionState) => {
     try {
-      // Get total players for this auction's tournament filter
       let totalCount = 0;
       
       if (auction.tournament_filter) {
@@ -343,7 +363,6 @@ function AuctionPageContent() {
       
       setTotalPlayers(totalCount);
       
-      // Get sold players count
       const { count: soldCount } = await supabase
         .from('team_players')
         .select('*', { count: 'exact', head: true })
@@ -362,39 +381,51 @@ function AuctionPageContent() {
       return;
     }
     
-    const { data: mgr } = await supabase
-      .from('managers')
-      .select('*')
-      .eq('email', session.user.email)
-      .single();
-    
-    if (!mgr) {
-      router.push('/login');
-      return;
-    }
-    
-    setCurrentUser(mgr);
+    setCurrentUserEmail(session.user.email || null);
     
     const auction = await loadAuctionState();
     
-    if (auction) {
-      // CHECK IF MANAGER IS A PARTICIPANT
+    if (!auction) {
+      setLoading(false);
+      return;
+    }
+
+    const accessInfo = await getAuctionAccess(
+      session.user.email || '',
+      auction.auction_id
+    );
+
+    if (!accessInfo.canView) {
+      alert('⚠️ You do not have access to this auction!');
+      router.push('/home');
+      return;
+    }
+
+    setAccess(accessInfo);
+
+    if (accessInfo.isParticipant && accessInfo.participantId) {
       const { data: participant } = await supabase
         .from('auction_participants')
-        .select('participant_id')
-        .eq('auction_id', auction.auction_id)
-        .eq('manager_id', mgr.manager_id)
+        .select(`
+          participant_id,
+          manager_id,
+          current_budget,
+          starting_budget,
+          managers!inner (
+            manager_id,
+            manager_name,
+            email,
+            role,
+            team_name
+          )
+        `)
+        .eq('participant_id', accessInfo.participantId)
         .single();
-      
-      if (!participant) {
-        // Not a participant - redirect to home
-        alert('⚠️ You are not registered for this auction!\n\nPlease join the lobby and click "I\'m Ready" before the auction starts.');
-        router.push('/home');
-        return;
+
+      if (participant) {
+        setCurrentParticipant(participant as any);
+        loadMyTeam(accessInfo.participantId, auction);
       }
-      
-      // Participant verified - load team
-      loadMyTeam(mgr.manager_id, auction);
     }
     
     setLoading(false);
@@ -402,41 +433,30 @@ function AuctionPageContent() {
 
   const loadNextPlayer = async (auction: AuctionState) => {
     try {
-      console.log('📥 Loading next player...');
-      console.log('🔍 Auction status:', auction.status);
-      
       const { data: soldPlayers } = await supabase
         .from('team_players')
         .select('player_id')
         .eq('auction_id', auction.auction_id);
 
       const soldPlayerIds = soldPlayers?.map(p => p.player_id) || [];
-      console.log('✅ Sold players:', soldPlayerIds.length);
 
       let availablePlayers: Player[] = [];
 
       if (auction.status === 'round2') {
-        console.log('🎯 Loading Round 2 players from selections...');
-
         const { data: round2Selections } = await supabase
           .from('round2_selections')
           .select('player_id')
           .eq('auction_id', auction.auction_id);
 
         if (!round2Selections || round2Selections.length === 0) {
-          console.log('🎉 Round 2 Complete!');
           setCurrentPlayer(null);
           return;
         }
 
         const selectedPlayerIds = round2Selections.map(s => s.player_id);
-        console.log('📋 Total Round 2 selections:', selectedPlayerIds.length);
-
         const unsoldSelectedIds = selectedPlayerIds.filter(id => !soldPlayerIds.includes(id));
-        console.log('📊 Unsold Round 2 players:', unsoldSelectedIds.length);
 
         if (unsoldSelectedIds.length === 0) {
-          console.log('🎉 Round 2 Complete!');
           setCurrentPlayer(null);
           return;
         }
@@ -449,8 +469,6 @@ function AuctionPageContent() {
         availablePlayers = players || [];
 
       } else {
-        console.log('🔍 Round 1 - Current filters:', auction.class_filter, auction.role_filter);
-
         const { data: unsoldPlayers } = await supabase
           .from('unsold_players')
           .select('player_id')
@@ -463,16 +481,15 @@ function AuctionPageContent() {
           .from('players')
           .select('*');
 
-          // Apply tournament filter first
-          if (auction.tournament_filter) {
-            queryBuilder = queryBuilder.eq(auction.tournament_filter, true);
+        if (auction.tournament_filter) {
+          queryBuilder = queryBuilder.eq(auction.tournament_filter, true);
         }
 
-          if (auction.class_filter) {
-            queryBuilder = queryBuilder.eq('class_band', auction.class_filter);
+        if (auction.class_filter) {
+          queryBuilder = queryBuilder.eq('class_band', auction.class_filter);
         }
-          if (auction.role_filter) {
-            queryBuilder = queryBuilder.eq('role', auction.role_filter);
+        if (auction.role_filter) {
+          queryBuilder = queryBuilder.eq('role', auction.role_filter);
         }
 
         if (excludedPlayerIds.length > 0) {
@@ -483,20 +500,16 @@ function AuctionPageContent() {
         availablePlayers = players || [];
       }
 
-      console.log('📊 Available players:', availablePlayers.length);
-
       if (availablePlayers.length > 0) {
         const randomIndex = Math.floor(Math.random() * availablePlayers.length);
         const newPlayer = availablePlayers[randomIndex];
-
-        console.log('✅ Selected player:', newPlayer.player_name);
 
         await supabase
           .from('auctions')
           .update({
             current_player_id: newPlayer.player_id,
             current_bid_amount: 0,
-            current_bid_manager_id: null,
+            current_bid_participant_id: null,
             timer_seconds: 30,
           })
           .eq('auction_id', auction.auction_id);
@@ -506,116 +519,95 @@ function AuctionPageContent() {
       }
 
       if (auction.status === 'round2') {
-        console.log('🎉 Round 2 Complete!');
         setCurrentPlayer(null);
         return;
       }
 
-      console.log('No players in current category, auto-progressing...');
-      
-      
+      const categoryOrder = [
+        { class_band: 'Platinum', role: 'Batsman' },
+        { class_band: 'Platinum', role: 'Bowler' },
+        { class_band: 'Platinum', role: 'All-rounder' },
+        { class_band: 'Platinum', role: 'Wicket Keeper' },
+        { class_band: 'Gold', role: 'Batsman' },
+        { class_band: 'Gold', role: 'Bowler' },
+        { class_band: 'Gold', role: 'All-rounder' },
+        { class_band: 'Gold', role: 'Wicket Keeper' },
+        { class_band: 'Silver', role: 'Batsman' },
+        { class_band: 'Silver', role: 'Bowler' },
+        { class_band: 'Silver', role: 'All-rounder' },
+        { class_band: 'Silver', role: 'Wicket Keeper' },
+      ];
 
+      const currentIndex = categoryOrder.findIndex(
+        (cat) => cat.class_band === auction.class_filter && cat.role === auction.role_filter
+      );
 
-       const categoryOrder = [
-  { class_band: 'Platinum', role: 'Batsman' },
-  { class_band: 'Platinum', role: 'Bowler' },
-  { class_band: 'Platinum', role: 'All-rounder' },
-  { class_band: 'Platinum', role: 'Wicket Keeper' },
+      if (currentIndex === -1) {
+        const first = categoryOrder[0];
+        await supabase
+          .from('auctions')
+          .update({ class_filter: first.class_band, role_filter: first.role })
+          .eq('auction_id', auction.auction_id);
 
-  { class_band: 'Gold', role: 'Batsman' },
-  { class_band: 'Gold', role: 'Bowler' },
-  { class_band: 'Gold', role: 'All-rounder' },
-  { class_band: 'Gold', role: 'Wicket Keeper' },
+        await loadNextPlayer({ ...auction, class_filter: first.class_band, role_filter: first.role });
+        return;
+      }
 
-  { class_band: 'Silver', role: 'Batsman' },
-  { class_band: 'Silver', role: 'Bowler' },
-  { class_band: 'Silver', role: 'All-rounder' },
-  { class_band: 'Silver', role: 'Wicket Keeper' },
-];
+      if (currentIndex < categoryOrder.length - 1) {
+        const nextCategory = categoryOrder[currentIndex + 1];
+        await supabase
+          .from('auctions')
+          .update({
+            class_filter: nextCategory.class_band,
+            role_filter: nextCategory.role,
+          })
+          .eq('auction_id', auction.auction_id);
 
-const currentIndex = categoryOrder.findIndex(
-  (cat) => cat.class_band === auction.class_filter && cat.role === auction.role_filter
-);
+        await loadNextPlayer({
+          ...auction,
+          class_filter: nextCategory.class_band,
+          role_filter: nextCategory.role,
+        });
+        return;
+      }
 
-// if current filter is empty/invalid, start from first
-if (currentIndex === -1) {
-  const first = categoryOrder[0];
+      await supabase
+        .from('auctions')
+        .update({
+          status: 'completed',
+          current_player_id: null,
+          current_bid_amount: 0,
+          current_bid_participant_id: null,
+          is_paused: true,
+        })
+        .eq('auction_id', auction.auction_id);
 
-  await supabase
-    .from('auctions')
-    .update({ class_filter: first.class_band, role_filter: first.role })
-    .eq('auction_id', auction.auction_id);
-
-  await loadNextPlayer({ ...auction, class_filter: first.class_band, role_filter: first.role });
-  return;
-}
-
-if (currentIndex < categoryOrder.length - 1) {
-  const nextCategory = categoryOrder[currentIndex + 1];
-
-  await supabase
-    .from('auctions')
-    .update({
-      class_filter: nextCategory.class_band,
-      role_filter: nextCategory.role,
-    })
-    .eq('auction_id', auction.auction_id);
-
-  await loadNextPlayer({
-    ...auction,
-    class_filter: nextCategory.class_band,
-    role_filter: nextCategory.role,
-  });
-
-  return;
-}
-
-    // Round 1 finished
-  await supabase
-    .from('auctions')
-    .update({
-      status: 'completed',
-      current_player_id: null,
-      current_bid_amount: 0,
-      current_bid_manager_id: null,
-      is_paused: true,
-    })
-    .eq('auction_id', auction.auction_id);
-
-    setRound1Complete(true);
-  setCurrentPlayer(null);
-  return;
-
-     
-      
-
-
-
-
-
-
-
+      setRound1Complete(true);
+      setCurrentPlayer(null);
 
     } catch (error) {
       console.error('Error loading player:', error);
     }
   };
 
-  const loadMyTeam = async (managerId: number, auction?: AuctionState) => {
+  const loadMyTeam = async (participantId: number, auction?: AuctionState) => {
     const auctionToUse = auction || auctionState;
     if (!auctionToUse) return;
     
     try {
-      const { data: teamData, error: teamError } = await supabase
+      const { data: participant } = await supabase
+        .from('auction_participants')
+        .select('manager_id')
+        .eq('participant_id', participantId)
+        .single();
+
+      if (!participant) return;
+
+      const { data: teamData } = await supabase
         .from('team_players')
         .select('player_id, price')
-        .eq('manager_id', managerId)
+        .eq('manager_id', participant.manager_id)
         .eq('auction_id', auctionToUse.auction_id);
-
-      if (teamError) {
-        console.error('Error loading team players:', teamError);
-        return;
-      }
 
       if (!teamData || teamData.length === 0) {
         setMyTeam([]);
@@ -624,15 +616,10 @@ if (currentIndex < categoryOrder.length - 1) {
 
       const playerIds = teamData.map(item => item.player_id);
       
-      const { data: playersData, error: playersError } = await supabase
+      const { data: playersData } = await supabase
         .from('players')
         .select('*')
         .in('player_id', playerIds);
-
-      if (playersError) {
-        console.error('Error loading players:', playersError);
-        return;
-      }
 
       if (playersData) {
         const teamWithPrices = playersData.map(player => {
@@ -650,7 +637,7 @@ if (currentIndex < categoryOrder.length - 1) {
   };
 
   const handleBid = async () => {
-    if (!currentUser || !currentPlayer || !auctionState) return;
+    if (!currentParticipant || !currentPlayer || !auctionState) return;
 
     if (myTeam.length >= 15) {
       alert('You have reached the maximum of 15 players!');
@@ -659,39 +646,33 @@ if (currentIndex < categoryOrder.length - 1) {
 
     const nextBidAmount = getNextBidAmount();
     
-    if (currentUser.current_budget < nextBidAmount) {
+    if (currentParticipant.current_budget < nextBidAmount) {
       alert('Insufficient budget!');
       return;
     }
 
-    const budgetAfterBid = currentUser.current_budget - nextBidAmount;
+    const budgetAfterBid = currentParticipant.current_budget - nextBidAmount;
     const playersAfterBid = myTeam.length + 1;
     const playersStillNeeded = Math.max(0, 11 - playersAfterBid);
     
     if (playersStillNeeded > 0) {
       const missing = getMissingRoles();
       
-      let totalMinimumCost = 0;
       const missingCount = missing.Batsman + missing.Bowler + missing['All-rounder'] + missing['Wicket Keeper'];
       
       const playersToCalculate = Math.max(missingCount, playersStillNeeded);
-      
-      // Round 1: Need 60 pts per player | Round 2: Need only 5 pts per player (bid increments)
       const costPerPlayer = auctionState?.status === 'round2' ? 5 : 60;
-      totalMinimumCost = playersToCalculate * costPerPlayer;
+      const totalMinimumCost = playersToCalculate * costPerPlayer;
       
       if (budgetAfterBid < totalMinimumCost) {
         alert(
           `⚠️ CANNOT BID!\n\n` +
           `After this ${nextBidAmount} pts bid, you'll have ${budgetAfterBid} pts left.\n\n` +
-          `You still need ${playersStillNeeded} more players (minimum ${totalMinimumCost} pts).\n\n` +
-          `This bid would eliminate you from the game!`
+          `You still need ${playersStillNeeded} more players (minimum ${totalMinimumCost} pts).`
         );
         return;
       }
     }
-
-    console.log('💰 Attempting bid:', nextBidAmount, 'for', currentPlayer.player_name);
 
     const { data: currentAuction } = await supabase
       .from('auctions')
@@ -700,15 +681,14 @@ if (currentIndex < categoryOrder.length - 1) {
       .single();
 
     if (currentAuction?.is_bid_locked) {
-      alert('⏱️ Another bid in progress! Please wait...');
+      alert('⏱️ Another bid in progress!');
       return;
     }
 
     if (currentAuction?.bid_freeze_until) {
       const freezeEnd = new Date(currentAuction.bid_freeze_until).getTime();
-      const now = Date.now();
-      if (now < freezeEnd) {
-        alert('⏱️ Bidding frozen! Please wait...');
+      if (Date.now() < freezeEnd) {
+        alert('⏱️ Bidding frozen!');
         return;
       }
     }
@@ -721,19 +701,18 @@ if (currentIndex < categoryOrder.length - 1) {
       .select();
 
     if (lockError || !lockResult || lockResult.length === 0) {
-      console.log('⚠️ Bid lock failed - someone else bid first');
-      alert('⏱️ Another manager bid first! Try again...');
+      alert('⏱️ Another manager bid first!');
       return;
     }
 
     const freezeUntil = new Date(Date.now() + 3000);
-    const message = `${currentUser.team_name || currentUser.manager_name} bid ${nextBidAmount} pts!`;
+    const message = `${currentParticipant.managers.team_name || currentParticipant.managers.manager_name} bid ${nextBidAmount} pts!`;
 
     await supabase
       .from('auctions')
       .update({
         current_bid_amount: nextBidAmount,
-        current_bid_manager_id: currentUser.manager_id,
+        current_bid_participant_id: currentParticipant.participant_id,
         timer_seconds: 30,
         bid_freeze_until: freezeUntil.toISOString(),
         freeze_message: message,
@@ -742,22 +721,13 @@ if (currentIndex < categoryOrder.length - 1) {
 
     await supabase.from('bids').insert({
       auction_id: auctionState.auction_id,
-      manager_id: currentUser.manager_id,
+      participant_id: currentParticipant.participant_id,
+      manager_id: currentParticipant.manager_id,
       player_id: currentPlayer.player_id,
       bid_amount: nextBidAmount,
     });
 
-    console.log('✅ Bid placed successfully');
-
-    const { data: updatedUser } = await supabase
-      .from('managers')
-      .select('*')
-      .eq('manager_id', currentUser.manager_id)
-      .single();
-    
-    if (updatedUser) {
-      setCurrentUser(updatedUser);
-    }
+    await refreshCurrentParticipant();
 
     setTimeout(async () => {
       await supabase
@@ -786,12 +756,7 @@ if (currentIndex < categoryOrder.length - 1) {
   };
 
   const handlePlayerSold = async () => {
-    console.log('🔔 handlePlayerSold called');
-    
-    if (isProcessingSaleRef.current) {
-      console.log('⚠️ Already processing a sale, skipping...');
-      return;
-    }
+    if (isProcessingSaleRef.current) return;
     
     isProcessingSaleRef.current = true;
     
@@ -802,10 +767,7 @@ if (currentIndex < categoryOrder.length - 1) {
         .eq('auction_id', auctionState!.auction_id)
         .single();
 
-      if (!latestAuction) {
-        console.error('❌ Could not fetch auction state');
-        return;
-      }
+      if (!latestAuction) return;
 
       const { data: latestPlayer } = await supabase
         .from('players')
@@ -813,57 +775,45 @@ if (currentIndex < categoryOrder.length - 1) {
         .eq('player_id', latestAuction.current_player_id)
         .single();
 
-      if (!latestPlayer) {
-        console.error('❌ Could not fetch current player');
-        return;
-      }
+      if (!latestPlayer) return;
 
-      console.log('📋 Processing sale for:', latestPlayer.player_name);
-
-      let manager = null;
+      let participant = null;
       const currentRound = latestAuction.status === 'round2' ? 2 : 1;
 
-      if (latestAuction.current_bid_manager_id && latestAuction.current_bid_amount > 0) {
-        console.log('💰 Selling player to:', latestAuction.current_bid_manager_id, 'for', latestAuction.current_bid_amount);
-        
-        const { error: insertError } = await supabase.from('team_players').insert({
-          auction_id: latestAuction.auction_id,
-          manager_id: latestAuction.current_bid_manager_id,
-          player_id: latestPlayer.player_id,
-          price: latestAuction.current_bid_amount,
-          round: currentRound,
-        });
-
-        if (insertError) {
-          console.error('❌ Error inserting team_players:', insertError);
-        } else {
-          console.log('✅ Player added to team_players (Round', currentRound, ')');
-        }
-
-        const { data: managerData } = await supabase
-          .from('managers')
-          .select('*')
-          .eq('manager_id', latestAuction.current_bid_manager_id)
+      if (latestAuction.current_bid_participant_id && latestAuction.current_bid_amount > 0) {
+        const { data: participantData } = await supabase
+          .from('auction_participants')
+          .select(`
+            participant_id,
+            manager_id,
+            current_budget,
+            managers!inner (
+              manager_name,
+              team_name
+            )
+          `)
+          .eq('participant_id', latestAuction.current_bid_participant_id)
           .single();
 
-        manager = managerData;
+        participant = participantData;
 
-        if (manager) {
-          const newBudget = manager.current_budget - latestAuction.current_bid_amount;
-          console.log(`💸 Updating budget: ${manager.current_budget} → ${newBudget}`);
+        if (participant) {
+          await supabase.from('team_players').insert({
+            auction_id: latestAuction.auction_id,
+            manager_id: participant.manager_id,
+            player_id: latestPlayer.player_id,
+            price: latestAuction.current_bid_amount,
+            round: currentRound,
+          });
+
+          const newBudget = participant.current_budget - latestAuction.current_bid_amount;
           
           await supabase
-            .from('managers')
-            .update({ 
-              current_budget: newBudget
-            })
-            .eq('manager_id', latestAuction.current_bid_manager_id);
-          
-          console.log('✅ Budget updated');
+            .from('auction_participants')
+            .update({ current_budget: newBudget })
+            .eq('participant_id', latestAuction.current_bid_participant_id);
         }
       } else {
-        console.log('⏭️ No bids - player UNSOLD');
-        
         if (latestAuction.status !== 'round2') {
           const { data: existingUnsold } = await supabase
             .from('unsold_players')
@@ -877,14 +827,13 @@ if (currentIndex < categoryOrder.length - 1) {
               auction_id: latestAuction.auction_id,
               player_id: latestPlayer.player_id,
             });
-            console.log('✅ Player marked as unsold');
           }
         }
       }
 
-      const soldMsg = latestAuction.current_bid_manager_id && latestAuction.current_bid_amount > 0
-        ? `🎉 SOLD to ${manager?.team_name || manager?.manager_name || 'Manager'} for ${latestAuction.current_bid_amount} pts!`
-        : '⏭️ UNSOLD - Moving to next player...';
+        const soldMsg = latestAuction.current_bid_participant_id && latestAuction.current_bid_amount > 0
+            ? `🎉 SOLD to ${(participant?.managers as any)?.team_name || (participant?.managers as any)?.manager_name || 'Manager'} for ${latestAuction.current_bid_amount} pts!`
+            : '⏭️ UNSOLD - Moving to next player...';
 
       await supabase
         .from('auctions')
@@ -895,11 +844,7 @@ if (currentIndex < categoryOrder.length - 1) {
         })
         .eq('auction_id', latestAuction.auction_id);
 
-      console.log('💬 Showing sold message for 5 seconds...');
-
       setTimeout(async () => {
-        console.log('📥 Loading next player...');
-        
         await supabase
           .from('auctions')
           .update({
@@ -910,18 +855,17 @@ if (currentIndex < categoryOrder.length - 1) {
           .eq('auction_id', latestAuction.auction_id);
         
         await loadNextPlayer(latestAuction);
-        console.log('✅ Next player loaded successfully');
       }, 5000);
       
     } catch (error) {
-      console.error('❌ Error in handlePlayerSold:', error);
+      console.error('Error in handlePlayerSold:', error);
     } finally {
       isProcessingSaleRef.current = false;
     }
   };
 
   const handlePause = async () => {
-    if (!auctionState || currentUser?.role !== 'admin') return;
+    if (!auctionState || !access?.canControl) return;
 
     await supabase
       .from('auctions')
@@ -934,7 +878,7 @@ if (currentIndex < categoryOrder.length - 1) {
   };
 
   const handleApplyFilters = async () => {
-    if (!auctionState || currentUser?.role !== 'admin') return;
+    if (!auctionState || !access?.canControl) return;
     if (!selectedClass || !selectedRole) {
       alert('Please select both Class and Role');
       return;
@@ -995,7 +939,7 @@ if (currentIndex < categoryOrder.length - 1) {
   };
 
   const checkBudgetFreeze = async () => {
-    if (!currentUser || !auctionState) return;
+    if (!currentParticipant || !auctionState) return;
 
     const missing = getMissingRoles();
     const totalMissing = missing.Batsman + missing.Bowler + missing['All-rounder'] + missing['Wicket Keeper'];
@@ -1050,9 +994,9 @@ if (currentIndex < categoryOrder.length - 1) {
         }
       }
 
-      if (someRoleUnavailable || currentUser.current_budget < totalMinCost) {
+      if (someRoleUnavailable || currentParticipant.current_budget < totalMinCost) {
         setIsFrozen(true);
-        setFreezeMessage('Cannot meet minimum team requirements.\n\nWhat\'s Next: Wait for more players to be auctioned or for Round 2 to begin.');
+        setFreezeMessage('Cannot meet minimum team requirements.');
       } else {
         setIsFrozen(false);
         setFreezeMessage('');
@@ -1063,10 +1007,10 @@ if (currentIndex < categoryOrder.length - 1) {
   };
 
   useEffect(() => {
-    if (currentUser && myTeam) {
+    if (currentParticipant && myTeam) {
       checkBudgetFreeze();
     }
-  }, [myTeam.length, currentUser?.current_budget]);
+  }, [myTeam.length, currentParticipant?.current_budget]);
 
   const getRequirementStatus = (current: number, minimum: number) => {
     if (current >= minimum) return { icon: '✓', color: '#2e7d32' };
@@ -1088,8 +1032,7 @@ if (currentIndex < categoryOrder.length - 1) {
     );
   }
 
-  // Round 1 Complete - Admin View
-  if (round1Complete && currentUser?.role === 'admin') {
+  if (round1Complete && access?.canControl) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -1111,8 +1054,7 @@ if (currentIndex < categoryOrder.length - 1) {
           <h1 style={{ color: '#02084b', fontSize: '32px', marginBottom: '15px' }}>
             Round 1 Complete!
           </h1>
-          <p style={{ color: '#666', fontSize: '16px', marginBottom: '30px', lineHeight: '1.6' }}>
-            All categories have been auctioned.<br/>
+          <p style={{ color: '#666', fontSize: '16px', marginBottom: '30px' }}>
             Ready to set up Round 2?
           </p>
           <button
@@ -1126,11 +1068,7 @@ if (currentIndex < categoryOrder.length - 1) {
               border: 'none',
               borderRadius: '12px',
               cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(76, 175, 80, 0.4)',
-              transition: 'transform 0.2s',
             }}
-            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
             🎯 GO TO ROUND 2 SETUP
           </button>
@@ -1139,8 +1077,7 @@ if (currentIndex < categoryOrder.length - 1) {
     );
   }
 
-  // Round 1 Complete - Regular User View
-  if (round1Complete && currentUser?.role !== 'admin') {
+  if (round1Complete && !access?.canControl) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -1156,40 +1093,19 @@ if (currentIndex < categoryOrder.length - 1) {
           borderRadius: '16px',
           maxWidth: '500px',
           textAlign: 'center',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
         }}>
           <div style={{ fontSize: '64px', marginBottom: '20px' }}>⏳</div>
           <h1 style={{ color: '#02084b', fontSize: '32px', marginBottom: '15px' }}>
             Waiting for Round 2
           </h1>
-          <p style={{ color: '#666', fontSize: '16px', lineHeight: '1.6' }}>
-            Round 1 is complete!<br/>
-            Admin is preparing Round 2...<br/><br/>
-            Please wait...
+          <p style={{ color: '#666', fontSize: '16px' }}>
+            Admin is preparing Round 2...
           </p>
-          <div style={{ marginTop: '30px' }}>
-            <div className="spinner" style={{
-              width: '50px',
-              height: '50px',
-              border: '5px solid #f3f3f3',
-              borderTop: '5px solid #02084b',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              margin: '0 auto',
-            }}></div>
-          </div>
-          <style>{`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          `}</style>
         </div>
       </div>
     );
   }
 
-  // No player available (waiting to load)
   if (!currentPlayer) {
     return (
       <div style={{ 
@@ -1206,13 +1122,14 @@ if (currentIndex < categoryOrder.length - 1) {
 
   const nextBidAmount = getNextBidAmount();
   const teamComplete = myTeam.length >= 15;
-  const canBid = currentUser && 
-                 currentUser.starting_budget > 0 && 
-                 currentUser.current_budget >= nextBidAmount && 
+  
+  const canBid = access?.canBid && 
+                 currentParticipant && 
+                 currentParticipant.current_budget >= nextBidAmount && 
                  !teamComplete && 
                  !isFrozen;
+  
   const roleCounts = getRoleCounts();
-
   const displayBasePrice = auctionState.status === 'round2' ? 0 : currentPlayer.base_price;
 
   return (
@@ -1240,11 +1157,24 @@ if (currentIndex < categoryOrder.length - 1) {
               marginBottom: '15px',
               fontWeight: 'bold',
             }}>
-              🔥 ROUND 2 AUCTION - Base Price: 0 pts
+              🔥 ROUND 2 AUCTION
             </div>
           )}
 
-          {/* Player Count Stats */}
+          {access?.isAdmin && !access?.isParticipant && (
+            <div style={{
+              background: '#ff9800',
+              color: 'white',
+              padding: '10px',
+              borderRadius: '8px',
+              textAlign: 'center',
+              marginBottom: '15px',
+              fontWeight: 'bold',
+            }}>
+              👑 Viewing as Admin
+            </div>
+          )}
+
           <div style={{
             background: 'linear-gradient(135deg, #02084b 0%, #3E5B99 100%)',
             color: 'white',
@@ -1256,31 +1186,15 @@ if (currentIndex < categoryOrder.length - 1) {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '8px',
             }}>
               <div>
-                <span style={{ fontSize: '14px', opacity: 0.9 }}>Progress:</span>
-                <span style={{ fontSize: '18px', fontWeight: 'bold', marginLeft: '8px' }}>
+                <span style={{ fontSize: '18px', fontWeight: 'bold' }}>
                   {playersSold} / {totalPlayers}
                 </span>
               </div>
-              <div style={{ fontSize: '14px', opacity: 0.9 }}>
+              <div style={{ fontSize: '14px' }}>
                 {totalPlayers - playersSold} remaining
               </div>
-            </div>
-            <div style={{
-              width: '100%',
-              height: '8px',
-              background: 'rgba(255,255,255,0.3)',
-              borderRadius: '4px',
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                width: `${totalPlayers > 0 ? (playersSold / totalPlayers) * 100 : 0}%`,
-                height: '100%',
-                background: '#4caf50',
-                transition: 'width 0.3s ease',
-              }}></div>
             </div>
           </div>
 
@@ -1289,11 +1203,9 @@ if (currentIndex < categoryOrder.length - 1) {
               fontSize: '48px',
               fontWeight: 'bold',
               color: getTimerColor(),
-              fontFamily: 'monospace',
             }}>
               {auctionState.timer_seconds}
             </div>
-            <p style={{ color: '#666', fontSize: '12px' }}>seconds remaining</p>
           </div>
 
           <div style={{
@@ -1318,40 +1230,22 @@ if (currentIndex < categoryOrder.length - 1) {
             }}>
               <div>
                 <p style={{ color: '#666', fontSize: '10px' }}>Country</p>
-                <p style={{ color: '#02084b', fontWeight: 'bold', fontSize: '12px' }}>{currentPlayer.country}</p>
+                <p style={{ color: '#02084b', fontWeight: 'bold' }}>{currentPlayer.country}</p>
               </div>
               <div>
                 <p style={{ color: '#666', fontSize: '10px' }}>Role</p>
-                <p style={{ color: '#02084b', fontWeight: 'bold', fontSize: '12px' }}>{currentPlayer.role}</p>
+                <p style={{ color: '#02084b', fontWeight: 'bold' }}>{currentPlayer.role}</p>
               </div>
               <div>
                 <p style={{ color: '#666', fontSize: '10px' }}>Class</p>
-                <p style={{ color: '#02084b', fontWeight: 'bold', fontSize: '12px' }}>{currentPlayer.class_band}</p>
+                <p style={{ color: '#02084b', fontWeight: 'bold' }}>{currentPlayer.class_band}</p>
               </div>
-              <div>
-                <p style={{ color: '#666', fontSize: '10px' }}>Base Price</p>
-                <p style={{ color: '#02084b', fontWeight: 'bold', fontSize: '12px' }}>{displayBasePrice} pts</p>
-              </div>
-              {currentPlayer.role_detail && (
-                <div>
-                  <p style={{ color: '#666', fontSize: '10px' }}>Specialty</p>
-                  <p style={{ color: '#02084b', fontWeight: 'bold', fontSize: '12px' }}>{currentPlayer.role_detail}</p>
-                </div>
-              )}
-              {currentPlayer.ipl_team && (
-                <div>
-                  <p style={{ color: '#666', fontSize: '10px' }}>IPL Team</p>
-                  <p style={{ color: '#02084b', fontWeight: 'bold', fontSize: '12px' }}>{currentPlayer.ipl_team}</p>
-                </div>
-              )}
             </div>
           </div>
 
           {auctionState.freeze_message && (
             <div style={{
-              background: auctionState.freeze_message.includes('SOLD') || auctionState.freeze_message.includes('🎉') 
-                ? '#4caf50' 
-                : '#2196f3',
+              background: '#4caf50',
               color: 'white',
               padding: '20px',
               borderRadius: '8px',
@@ -1373,57 +1267,17 @@ if (currentIndex < categoryOrder.length - 1) {
           }}>
             {currentBidder && auctionState.current_bid_amount > 0 ? (
               <>
-                <p style={{ color: '#666', fontSize: '12px', marginBottom: '5px' }}>Current Highest Bid</p>
-                <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#02084b', marginBottom: '5px' }}>
+                <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#02084b' }}>
                   {auctionState.current_bid_amount} points
                 </p>
-                <p style={{ color: '#666', fontSize: '14px' }}>
-                  by <strong>{currentBidder.team_name || currentBidder.manager_name}</strong>
+                <p style={{ color: '#666' }}>
+                  by <strong>{currentBidder.managers.team_name || currentBidder.managers.manager_name}</strong>
                 </p>
               </>
             ) : (
-              <>
-                <p style={{ color: '#856404', fontSize: '16px', fontWeight: 'bold' }}>No bids yet!</p>
-                <p style={{ color: '#856404', fontSize: '12px' }}>Starting: {displayBasePrice} points</p>
-              </>
+              <p style={{ color: '#856404', fontSize: '16px', fontWeight: 'bold' }}>No bids yet!</p>
             )}
           </div>
-
-          {teamComplete && (
-            <div style={{
-              background: '#4caf50',
-              color: 'white',
-              padding: '15px',
-              borderRadius: '8px',
-              marginBottom: '15px',
-              textAlign: 'center',
-            }}>
-              <p style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>
-                🎉 Team Complete - Viewing Only
-              </p>
-              <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>
-                You have reached the maximum of 15 players
-              </p>
-            </div>
-          )}
-
-          {!teamComplete && isFrozen && freezeMessage && (
-            <div style={{
-              background: '#ff9800',
-              color: 'white',
-              padding: '15px',
-              borderRadius: '8px',
-              marginBottom: '15px',
-              textAlign: 'center',
-            }}>
-              <p style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>
-                ⚠️ Bidding Paused
-              </p>
-              <p style={{ fontSize: '13px', marginTop: '8px', margin: 0, whiteSpace: 'pre-line' }}>
-                {freezeMessage}
-              </p>
-            </div>
-          )}
 
           {canBid && (
             <div style={{ textAlign: 'center', marginBottom: '10px' }}>
@@ -1443,311 +1297,110 @@ if (currentIndex < categoryOrder.length - 1) {
               >
                 {auctionState.is_bid_locked ? '⏱️ WAIT...' : `🎯 BID ${nextBidAmount} POINTS`}
               </button>
-              <p style={{ color: '#666', fontSize: '12px', marginTop: '5px' }}>
-                Budget: {currentUser.current_budget} pts
-              </p>
             </div>
           )}
 
-          {!teamComplete && isFrozen && (
-            <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+          {access?.canControl && (
+            <div style={{ textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center' }}>
               <button
-                disabled
+                onClick={handlePause}
                 style={{
-                  padding: '15px 40px',
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  background: '#ccc',
-                  color: '#666',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'not-allowed',
+                  padding: '8px 20px',
+                  background: 'white',
+                  color: '#02084b',
+                  border: '2px solid #02084b',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
                 }}
               >
-                🚫 BIDDING FROZEN
+                {auctionState.is_paused ? '▶️ RESUME' : '⏸️ PAUSE'}
               </button>
-              <p style={{ color: '#ff9800', fontSize: '12px', marginTop: '5px', fontWeight: 'bold' }}>
-                Cannot afford minimum requirements
-              </p>
+              <button
+                onClick={() => handlePlayerSold()}
+                style={{
+                  padding: '8px 20px',
+                  background: '#f57c00',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                }}
+              >
+                ⏭️ SKIP
+              </button>
             </div>
           )}
+        </div>
+      </div>
 
-          {currentUser?.role === 'admin' && (
-            <>
-              <div style={{ textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '15px' }}>
-                <button
-                  onClick={handlePause}
-                  style={{
-                    padding: '8px 20px',
-                    fontSize: '14px',
-                    background: 'white',
-                    color: '#02084b',
-                    border: '2px solid #02084b',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {auctionState.is_paused ? '▶️ RESUME' : '⏸️ PAUSE'}
-                </button>
-                <button
-                  onClick={() => handlePlayerSold()}
-                  style={{
-                    padding: '8px 20px',
-                    fontSize: '14px',
-                    background: '#f57c00',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  ⏭️ SKIP
-                </button>
+      {access?.isParticipant && currentParticipant && (
+        <div style={{ width: '420px' }}>
+          <div style={{
+            background: 'white',
+            padding: '20px',
+            borderRadius: '12px',
+          }}>
+            <h3 style={{ color: '#02084b', marginBottom: '10px' }}>
+              {currentParticipant.managers.team_name || currentParticipant.managers.manager_name}
+            </h3>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '10px',
+              marginBottom: '12px',
+            }}>
+              <div style={{ background: '#f8f9fa', padding: '12px', borderRadius: '8px' }}>
+                <p style={{ color: '#666', fontSize: '11px' }}>Budget</p>
+                <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#02084b' }}>
+                  {currentParticipant.current_budget}
+                </p>
               </div>
+              <div style={{ background: '#f8f9fa', padding: '12px', borderRadius: '8px' }}>
+                <p style={{ color: '#666', fontSize: '11px' }}>Players</p>
+                <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#02084b' }}>
+                  {myTeam.length} / 15
+                </p>
+              </div>
+            </div>
 
-              {auctionState.status !== 'round2' && (
-                <div style={{
-                  background: '#f8f9fa',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  marginBottom: '10px',
+            <div>
+              <h4 style={{ color: '#02084b', marginBottom: '10px' }}>
+                Squad ({myTeam.length})
+              </h4>
+              {myTeam.length === 0 ? (
+                <p style={{ color: '#666', fontSize: '12px', textAlign: 'center' }}>
+                  No players yet
+                </p>
+              ) : (
+                <div style={{ 
+                  maxHeight: '280px', 
+                  overflowY: 'auto',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '6px',
                 }}>
-                  <p style={{ fontSize: '11px', color: '#666', marginBottom: '8px', fontWeight: '600' }}>
-                    🎛️ Manual Filter Override
-                  </p>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-                    <select
-                      value={selectedClass}
-                      onChange={(e) => setSelectedClass(e.target.value)}
+                  {myTeam.map((player) => (
+                    <div
+                      key={player.player_id}
                       style={{
                         padding: '8px',
-                        fontSize: '12px',
+                        background: '#fff',
+                        borderRadius: '6px',
                         border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
                       }}
                     >
-                      <option value="">Select Class</option>
-                      <option value="Platinum">Platinum</option>
-                      <option value="Gold">Gold</option>
-                      <option value="Silver">Silver</option>
-                    </select>
-                    <select
-                      value={selectedRole}
-                      onChange={(e) => setSelectedRole(e.target.value)}
-                      style={{
-                        padding: '8px',
-                        fontSize: '12px',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <option value="">Select Role</option>
-                      <option value="Batsman">Batsman</option>
-                      <option value="Bowler">Bowler</option>
-                      <option value="All-rounder">All-rounder</option>
-                      <option value="Wicket Keeper">Wicket Keeper</option>
-                    </select>
-                  </div>
-                  <button
-                    onClick={handleApplyFilters}
-                    disabled={!selectedClass || !selectedRole}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      background: (!selectedClass || !selectedRole) ? '#ccc' : '#02084b',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: (!selectedClass || !selectedRole) ? 'not-allowed' : 'pointer',
-                    }}
-                  >
-                    Apply Filters
-                  </button>
-                  <p style={{ fontSize: '10px', color: '#666', marginTop: '5px', fontStyle: 'italic' }}>
-                    Auto-progression resumes after current category completes
-                  </p>
+                      <p style={{ color: '#02084b', fontSize: '11px', margin: 0 }}>
+                        {player.player_name} ({player.price}pts)
+                      </p>
+                    </div>
+                  ))}
                 </div>
               )}
-            </>
-          )}
-
-          <div style={{
-            textAlign: 'center',
-            paddingTop: '12px',
-            borderTop: '1px solid #eee',
-            color: '#999',
-            fontSize: '11px',
-            marginTop: '10px',
-          }}>
-            Powered by <strong style={{ color: '#02084b' }}>NB Blue Studios</strong>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ width: '420px' }}>
-        <div style={{
-          background: 'white',
-          padding: '20px',
-          borderRadius: '12px',
-          boxShadow: '0 10px 30px rgba(2, 8, 75, 0.2)',
-        }}>
-          <h3 style={{ color: '#02084b', marginBottom: '10px', fontSize: '20px' }}>
-            {currentUser?.team_name || currentUser?.manager_name}
-          </h3>
-
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              router.push('/login');
-            }}
-            style={{
-              padding: '6px 12px',
-              fontSize: '12px',
-              background: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              marginBottom: '15px',
-              width: '100%',
-            }}
-          >
-            🚪 Logout
-          </button>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '10px',
-            marginBottom: '12px',
-          }}>
-            <div style={{
-              background: isFrozen ? '#ffe0b2' : '#f8f9fa',
-              padding: '12px',
-              borderRadius: '8px',
-              border: isFrozen ? '2px solid #ff9800' : 'none',
-            }}>
-              <p style={{ color: '#666', fontSize: '11px', marginBottom: '3px' }}>Budget</p>
-              <p style={{ fontSize: '20px', fontWeight: 'bold', color: isFrozen ? '#ff9800' : '#02084b' }}>
-                {currentUser?.current_budget} / {currentUser?.starting_budget}
-              </p>
-              {isFrozen && (
-                <p style={{ color: '#ff9800', fontSize: '9px', margin: 0, marginTop: '3px' }}>
-                  ⚠️ Frozen
-                </p>
-              )}
-            </div>
-            <div style={{
-              background: '#f8f9fa',
-              padding: '12px',
-              borderRadius: '8px',
-            }}>
-              <p style={{ color: '#666', fontSize: '11px', marginBottom: '3px' }}>Players</p>
-              <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#02084b' }}>
-                {myTeam.length} / 15
-              </p>
             </div>
           </div>
-
-          <div style={{
-            background: '#f8f9fa',
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '12px',
-          }}>
-            <p style={{ color: '#666', fontSize: '11px', marginBottom: '8px', fontWeight: '600' }}>
-              📊 Team Requirements:
-            </p>
-            {(() => {
-              const batsmanStatus = getRequirementStatus(roleCounts.Batsman, 3);
-              const bowlerStatus = getRequirementStatus(roleCounts.Bowler, 3);
-              const allrounderStatus = getRequirementStatus(roleCounts['All-rounder'], 2);
-              const wkStatus = getRequirementStatus(roleCounts['Wicket Keeper'], 1);
-              
-              return (
-                <>
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(2, 1fr)', 
-                    gap: '6px',
-                    marginBottom: '8px'
-                  }}>
-                    <div style={{ fontSize: '11px' }}>
-                      <span style={{ color: batsmanStatus.color, marginRight: '5px' }}>{batsmanStatus.icon}</span>
-                      <span style={{ color: '#02084b' }}>Batsmen: {roleCounts.Batsman}/3</span>
-                    </div>
-                    <div style={{ fontSize: '11px' }}>
-                      <span style={{ color: bowlerStatus.color, marginRight: '5px' }}>{bowlerStatus.icon}</span>
-                      <span style={{ color: '#02084b' }}>Bowlers: {roleCounts.Bowler}/3</span>
-                    </div>
-                    <div style={{ fontSize: '11px' }}>
-                      <span style={{ color: allrounderStatus.color, marginRight: '5px' }}>{allrounderStatus.icon}</span>
-                      <span style={{ color: '#02084b' }}>All-rounders: {roleCounts['All-rounder']}/2</span>
-                    </div>
-                    <div style={{ fontSize: '11px' }}>
-                      <span style={{ color: wkStatus.color, marginRight: '5px' }}>{wkStatus.icon}</span>
-                      <span style={{ color: '#02084b' }}>WK: {roleCounts['Wicket Keeper']}/1</span>
-                    </div>
-                  </div>
-                  <div style={{ borderTop: '1px solid #ddd', paddingTop: '8px', fontSize: '11px', fontWeight: '600' }}>
-                    Total: {myTeam.length}/11 min
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-
-          <div>
-            <h4 style={{ color: '#02084b', marginBottom: '10px', fontSize: '16px' }}>
-              Squad ({myTeam.length})
-            </h4>
-            {myTeam.length === 0 ? (
-              <p style={{ color: '#666', fontSize: '12px', textAlign: 'center' }}>
-                No players yet. Start bidding!
-              </p>
-            ) : (
-              <div style={{ 
-                maxHeight: '280px', 
-                overflowY: 'auto',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '6px',
-              }}>
-                {myTeam.map((player) => (
-                  <div
-                    key={player.player_id}
-                    style={{
-                      padding: '8px',
-                      background: '#fff',
-                      borderRadius: '6px',
-                      border: '1px solid #ddd',
-                    }}
-                  >
-                    <p style={{ color: '#02084b', fontSize: '11px', margin: 0 }}>
-                      {player.player_name} ({player.price}pts)
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div style={{
-            textAlign: 'center',
-            paddingTop: '15px',
-            marginTop: '15px',
-            borderTop: '1px solid #eee',
-            color: '#999',
-            fontSize: '11px',
-          }}>
-            Powered by <strong style={{ color: '#02084b' }}>NB Blue Studios</strong>
-          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -1758,10 +1411,9 @@ export default function AuctionPage() {
       display: 'flex', 
       justifyContent: 'center', 
       alignItems: 'center', 
-      minHeight: '100vh',
-      background: '#F8F8FC'
+      minHeight: '100vh'
     }}>
-      <p>Loading auction...</p>
+      <p>Loading...</p>
     </div>}>
       <AuctionPageContent />
     </Suspense>
