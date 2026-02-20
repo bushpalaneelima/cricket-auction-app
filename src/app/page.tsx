@@ -32,6 +32,7 @@ export default function LandingPage() {
           cursor: 'pointer',
           fontSize: '14px',
           fontWeight: 'bold',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
         }}
       >
         Login
@@ -42,65 +43,103 @@ export default function LandingPage() {
         maxWidth: '1000px',
         textAlign: 'center',
       }}>
-        {/* Title */}
+        {/* Title - Bright and visible */}
         <h1 style={{
-          fontSize: '42px',
+          fontSize: '48px',
           marginBottom: '15px',
           fontWeight: 'bold',
+          color: '#ffffff',
+          textShadow: '0 2px 4px rgba(0,0,0,0.3)',
         }}>
-          🏏 Cricket Auction Platform
+          🎯 AuctionLab
         </h1>
         
         {/* Subtitle */}
         <p style={{
           fontSize: '18px',
-          marginBottom: '40px',
-          opacity: 0.9,
+          marginBottom: '8px',
+          color: 'rgba(255,255,255,0.95)',
         }}>
           Professional auction engine for entertainment and education
+        </p>
+
+        <p style={{
+          fontSize: '13px',
+          marginBottom: '50px',
+          color: 'rgba(255,255,255,0.6)',
+        }}>
+          by NB Blue Studios
         </p>
 
         {/* Two Use Cases - Side by Side */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: '25px',
-          marginBottom: '40px',
+          gap: '30px',
+          marginBottom: '50px',
         }}>
           {/* Entertainment Mode */}
           <div style={{
-            background: 'rgba(255,255,255,0.1)',
-            padding: '25px',
-            borderRadius: '10px',
+            background: 'rgba(255,255,255,0.15)',
+            padding: '30px',
+            borderRadius: '12px',
             backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.1)',
           }}>
-            <div style={{ fontSize: '36px', marginBottom: '10px' }}>🎪</div>
-            <h3 style={{ fontSize: '20px', marginBottom: '10px', fontWeight: 'bold' }}>
+            <div style={{ fontSize: '42px', marginBottom: '15px' }}>🎪</div>
+            <h3 style={{ 
+              fontSize: '22px', 
+              marginBottom: '12px', 
+              fontWeight: 'bold',
+              color: '#ffffff',
+            }}>
               Entertainment Mode
             </h3>
-            <p style={{ fontSize: '13px', opacity: 0.85, marginBottom: '12px' }}>
-              IPL-style auction experience
+            <p style={{ 
+              fontSize: '14px', 
+              marginBottom: '15px',
+              color: 'rgba(255,255,255,0.9)',
+            }}>
+              Live auction experience
             </p>
-            <p style={{ fontSize: '12px', opacity: 0.7 }}>
+            <p style={{ 
+              fontSize: '12px', 
+              color: 'rgba(255,255,255,0.7)',
+              lineHeight: '1.6',
+            }}>
               Friend circles • Corporate teams • Fun & competition
             </p>
           </div>
 
           {/* Academic Mode */}
           <div style={{
-            background: 'rgba(255,255,255,0.1)',
-            padding: '25px',
-            borderRadius: '10px',
+            background: 'rgba(255,255,255,0.15)',
+            padding: '30px',
+            borderRadius: '12px',
             backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.1)',
           }}>
-            <div style={{ fontSize: '36px', marginBottom: '10px' }}>🎓</div>
-            <h3 style={{ fontSize: '20px', marginBottom: '10px', fontWeight: 'bold' }}>
+            <div style={{ fontSize: '42px', marginBottom: '15px' }}>🎓</div>
+            <h3 style={{ 
+              fontSize: '22px', 
+              marginBottom: '12px', 
+              fontWeight: 'bold',
+              color: '#ffffff',
+            }}>
               Academic Simulation
             </h3>
-            <p style={{ fontSize: '13px', opacity: 0.85, marginBottom: '12px' }}>
+            <p style={{ 
+              fontSize: '14px', 
+              marginBottom: '15px',
+              color: 'rgba(255,255,255,0.9)',
+            }}>
               Strategy & budget allocation
             </p>
-            <p style={{ fontSize: '12px', opacity: 0.7 }}>
+            <p style={{ 
+              fontSize: '12px', 
+              color: 'rgba(255,255,255,0.7)',
+              lineHeight: '1.6',
+            }}>
               MBA programs • Corporate L&D • Decision-making
             </p>
           </div>
@@ -110,7 +149,7 @@ export default function LandingPage() {
         <button
           onClick={() => router.push('/login')}
           style={{
-            padding: '15px 50px',
+            padding: '16px 60px',
             background: '#28a745',
             color: 'white',
             border: 'none',
@@ -118,8 +157,12 @@ export default function LandingPage() {
             cursor: 'pointer',
             fontSize: '16px',
             fontWeight: 'bold',
-            marginBottom: '30px',
+            marginBottom: '40px',
+            boxShadow: '0 4px 12px rgba(40, 167, 69, 0.3)',
+            transition: 'transform 0.2s',
           }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
           Get Started →
         </button>
@@ -127,9 +170,9 @@ export default function LandingPage() {
         {/* Footer */}
         <p style={{
           fontSize: '12px',
-          opacity: 0.6,
+          color: 'rgba(255,255,255,0.5)',
         }}>
-          Powered by <strong>NB Blue Studios</strong> • Professional Auction Engine
+          Powered by <strong style={{ color: 'rgba(255,255,255,0.7)' }}>NB Blue Studios</strong> • Professional Auction Engine
         </p>
       </div>
     </div>
