@@ -8,6 +8,8 @@ export default function AuctionSetupPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [manager, setManager] = useState<any>(null);
+  const [allManagers, setAllManagers] = useState<any[]>([]);
+  const [selectedManagers, setSelectedManagers] = useState<number[]>([]);
   
   // Filter states
   const [auctionName, setAuctionName] = useState('');
@@ -27,13 +29,13 @@ export default function AuctionSetupPage() {
     'Other'
   ];
 
-  // ✅ MAPPING FUNCTION - Converts display name to database column name
+  // ✅ MAPPING FUNCTION
   const getTournamentColumn = (displayName: string): string => {
     const mapping: { [key: string]: string } = {
       'T20 World Cup': 't20_wc_active',
       'ODI World Cup': 'odi_wc_active',
       'Indian Premier League': 'ipl_active',
-      'Champions Trophy': 'ct_active',
+      'Champions Trophy': 'champions_active',
       'Women Premier League': 'wpl_active',
       'WODI World Cup': 'wodi_wc_active',
       'WT20 World Cup': 'wt20_wc_active',
@@ -67,20 +69,55 @@ export default function AuctionSetupPage() {
     }
 
     setManager(mgr);
+    
+    // ✅ Load all managers for selection
+    await loadManagers();
+    
     setLoading(false);
+  };
+
+  const loadManagers = async () => {
+    const { data } = await supabase
+      .from('managers')
+      .select('*')
+      .eq('role', 'manager') // Only regular managers, not admins
+      .order('manager_name');
+
+    if (data) {
+      setAllManagers(data);
+      // Pre-select all managers by default
+      setSelectedManagers(data.map(m => m.manager_id));
+    }
+  };
+
+  const toggleManager = (managerId: number) => {
+    if (selectedManagers.includes(managerId)) {
+      setSelectedManagers(selectedManagers.filter(id => id !== managerId));
+    } else {
+      setSelectedManagers([...selectedManagers, managerId]);
+    }
   };
 
   const handleStartAuction = async () => {
     if (!auctionName || !tournament) {
-      alert('Please fill all fields!');
+      alert('Please fill auction name and tournament!');
+      return;
+    }
+
+    if (selectedManagers.length === 0) {
+      alert('Please select at least one manager!');
       return;
     }
 
     const confirmed = confirm(
-      '🚨 This will:\n\n' +
+      '🚨 Create New Auction?\n\n' +
+      `Auction Name: ${auctionName}\n` +
+      `Tournament: ${tournament}\n` +
+      `Participants: ${selectedManagers.length} managers\n\n` +
+      'This will:\n' +
       '1. Create a new auction\n' +
-      '2. Reset ALL manager budgets to 1000 pts\n' +
-      '3. Keep previous auction history intact\n\n' +
+      '2. Add selected managers as participants\n' +
+      '3. Each will start with 1000 pts budget\n\n' +
       'Continue?'
     );
 
@@ -89,23 +126,7 @@ export default function AuctionSetupPage() {
     try {
       console.log('🎬 Creating new auction...');
 
-      // STEP 1: Reset all manager budgets
-      const { error: resetError } = await supabase
-        .from('managers')
-        .update({ 
-          current_budget: 1000,
-          is_ready: false 
-        })
-        .neq('manager_id', 0); // Update all managers
-
-      if (resetError) {
-        console.error('Error resetting budgets:', resetError);
-        throw resetError;
-      }
-
-      console.log('✅ Manager budgets reset');
-
-      // STEP 2: Create new auction with CORRECT tournament column
+      // ✅ STEP 1: Create auction
       const tournamentColumn = getTournamentColumn(tournament);
       
       const { data: auction, error: auctionError } = await supabase
@@ -113,16 +134,16 @@ export default function AuctionSetupPage() {
         .insert([
           {
             auction_name: auctionName,
-            tournament_filter: tournamentColumn,  // ✅ FIXED - Now stores "t20_wc_active" instead of "T20 World Cup"
+            tournament_filter: tournamentColumn,
             class_filter: playerClass,
             role_filter: role,
             scheduled_at: new Date().toISOString(),
-            status: 'active',
+            status: 'draft', // ✅ Start as draft, not active
             timer_seconds: 30,
             is_paused: false,
             current_player_id: null,
             current_bid_amount: 0,
-            current_bid_manager_id: null
+            current_bid_participant_id: null
           }
         ])
         .select()
@@ -131,12 +152,35 @@ export default function AuctionSetupPage() {
       if (auctionError) throw auctionError;
 
       console.log('✅ Auction created:', auction.auction_id);
-      console.log('✅ Tournament filter set to:', tournamentColumn);
 
-      alert(`✅ Auction "${auctionName}" created!\n\nAuction ID: ${auction.auction_id}\nTournament: ${tournament}\nFilter: ${tournamentColumn}\nAll managers reset to 1000 pts.`);
+      // ✅ STEP 2: Add selected managers to auction_participants
+      const participants = selectedManagers.map(managerId => ({
+        auction_id: auction.auction_id,
+        manager_id: managerId,
+        starting_budget: 1000,
+        current_budget: 1000,
+        is_ready: false
+      }));
 
-      // Redirect to auction page
-      router.push('/auction');
+      const { error: participantsError } = await supabase
+        .from('auction_participants')
+        .insert(participants);
+
+      if (participantsError) throw participantsError;
+
+      console.log(`✅ Added ${selectedManagers.length} participants to auction`);
+
+      alert(
+        `✅ Auction "${auctionName}" created!\n\n` +
+        `Auction ID: ${auction.auction_id}\n` +
+        `Participants: ${selectedManagers.length} managers\n` +
+        `Status: Draft (waiting in lobby)\n\n` +
+        `Redirecting to lobby...`
+      );
+
+      // ✅ Redirect to lobby (not /auction)
+      router.push('/lobby');
+      
     } catch (error) {
       console.error('Error creating auction:', error);
       alert('Failed to create auction. Please check console for details.');
@@ -171,12 +215,14 @@ export default function AuctionSetupPage() {
       justifyContent: 'center',
     }}>
       <div style={{
-        maxWidth: '600px',
+        maxWidth: '700px',
         width: '100%',
         background: 'white',
         padding: '25px',
         borderRadius: '12px',
         boxShadow: '0 10px 30px rgba(2, 8, 75, 0.2)',
+        maxHeight: '90vh',
+        overflowY: 'auto',
       }}>
         {/* Header */}
         <div style={{
@@ -191,26 +237,8 @@ export default function AuctionSetupPage() {
             🎬 Create New Auction
           </h1>
           <p style={{ color: '#666', fontSize: '12px' }}>
-            This will reset all manager budgets to 1000 pts
+            Select participants and configure auction settings
           </p>
-        </div>
-
-        {/* Warning Box */}
-        <div style={{
-          background: '#fff3cd',
-          border: '2px solid #ffc107',
-          padding: '15px',
-          borderRadius: '8px',
-          marginBottom: '20px',
-        }}>
-          <p style={{ color: '#856404', fontSize: '13px', fontWeight: 'bold', marginBottom: '8px' }}>
-            ⚠️ Important:
-          </p>
-          <ul style={{ color: '#856404', fontSize: '12px', margin: 0, paddingLeft: '20px' }}>
-            <li>Previous auction history will be preserved</li>
-            <li>All manager budgets will reset to 1000 pts</li>
-            <li>Players can be re-auctioned in the new auction</li>
-          </ul>
         </div>
 
         {/* Form */}
@@ -273,12 +301,12 @@ export default function AuctionSetupPage() {
             </select>
           </div>
 
-          {/* Starting Filters - 2 Column Grid */}
+          {/* Starting Filters */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
             gap: '12px',
-            marginBottom: '15px'
+            marginBottom: '20px'
           }}>
             <div>
               <label style={{
@@ -339,23 +367,50 @@ export default function AuctionSetupPage() {
               </select>
             </div>
           </div>
-        </div>
 
-        {/* Info Box */}
-        <div style={{
-          background: '#e3f2fd',
-          padding: '12px',
-          borderRadius: '6px',
-          marginBottom: '20px',
-        }}>
-          <p style={{ 
-            color: '#02084b', 
-            fontSize: '11px', 
-            margin: 0,
-            lineHeight: '1.5'
-          }}>
-            💡 Auction will progress automatically through all classes (Platinum → Gold → Silver) and all 4 roles (Batsmen → Bowlers → All-rounders → Wicket Keepers)
-          </p>
+          {/* ✅ NEW: Manager Selection */}
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{
+              display: 'block',
+              marginBottom: '8px',
+              color: '#02084b',
+              fontWeight: '600',
+              fontSize: '13px'
+            }}>
+              Select Participants ({selectedManagers.length} selected)
+            </label>
+            <div style={{
+              border: '2px solid #ddd',
+              borderRadius: '6px',
+              padding: '10px',
+              maxHeight: '200px',
+              overflowY: 'auto',
+            }}>
+              {allManagers.map(mgr => (
+                <label
+                  key={mgr.manager_id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '8px',
+                    cursor: 'pointer',
+                    borderRadius: '4px',
+                    background: selectedManagers.includes(mgr.manager_id) ? '#e3f2fd' : 'transparent',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedManagers.includes(mgr.manager_id)}
+                    onChange={() => toggleManager(mgr.manager_id)}
+                    style={{ marginRight: '10px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '14px', color: '#02084b' }}>
+                    {mgr.manager_name}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Buttons */}
@@ -382,19 +437,19 @@ export default function AuctionSetupPage() {
           </button>
           <button
             onClick={handleStartAuction}
-            disabled={!auctionName || !tournament}
+            disabled={!auctionName || !tournament || selectedManagers.length === 0}
             style={{
               padding: '12px 30px',
               fontSize: '14px',
               fontWeight: '600',
-              background: (!auctionName || !tournament) ? '#ccc' : '#02084b',
+              background: (!auctionName || !tournament || selectedManagers.length === 0) ? '#ccc' : '#02084b',
               color: 'white',
               border: 'none',
               borderRadius: '6px',
-              cursor: (!auctionName || !tournament) ? 'not-allowed' : 'pointer',
+              cursor: (!auctionName || !tournament || selectedManagers.length === 0) ? 'not-allowed' : 'pointer',
             }}
           >
-            🚀 Create & Start Auction
+            🚀 Create Auction
           </button>
         </div>
 
