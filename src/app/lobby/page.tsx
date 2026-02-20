@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/navigation';
+import { getAuctionAccess } from '../lib/accessControl';
 
 interface Participant {
   participant_id: number;
@@ -21,7 +22,7 @@ export default function LobbyPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
-  const [currentParticipant, setCurrentParticipant] = useState<Participant | null>(null);
+  const [access, setAccess] = useState<any>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [activeAuction, setActiveAuction] = useState<any>(null);
 
@@ -31,10 +32,11 @@ export default function LobbyPage() {
   }, []);
 
   useEffect(() => {
-    if (activeAuction) {
+    if (activeAuction && currentUserEmail) {
+      checkAccess();
       loadParticipants();
       
-      // Subscribe to real-time changes in auction_participants
+      // Subscribe to real-time changes
       const channel = supabase
         .channel('lobby-changes')
         .on('postgres_changes', { 
@@ -51,7 +53,7 @@ export default function LobbyPage() {
         supabase.removeChannel(channel);
       };
     }
-  }, [activeAuction]);
+  }, [activeAuction, currentUserEmail]);
 
   useEffect(() => {
     // Subscribe to auction status changes
@@ -95,10 +97,27 @@ export default function LobbyPage() {
     setActiveAuction(data);
   };
 
+  const checkAccess = async () => {
+    if (!currentUserEmail || !activeAuction) return;
+
+    const accessInfo = await getAuctionAccess(
+      currentUserEmail,
+      activeAuction.auction_id
+    );
+
+    // If user cannot view this auction, redirect
+    if (!accessInfo.canView) {
+      alert('You do not have access to this auction.');
+      router.push('/home');
+      return;
+    }
+
+    setAccess(accessInfo);
+  };
+
   const loadParticipants = async () => {
     if (!activeAuction) return;
 
-    // ✅ NEW WAY - Query auction_participants with manager details
     const { data } = await supabase
       .from('auction_participants')
       .select(`
@@ -118,31 +137,25 @@ export default function LobbyPage() {
 
     if (data) {
       setParticipants(data as any);
-      
-      // Find current user's participant record
-      if (currentUserEmail) {
-        const current = data.find((p: any) => p.managers.email === currentUserEmail);
-        if (current) {
-          setCurrentParticipant(current as any);
-        }
-      }
     }
   };
 
   const toggleReady = async () => {
-    if (!currentParticipant || !activeAuction) return;
+    if (!access?.participantId) return;
     
+    const currentParticipant = participants.find(
+      p => p.participant_id === access.participantId
+    );
+    
+    if (!currentParticipant) return;
+
     const newReadyState = !currentParticipant.is_ready;
     
-    // ✅ NEW WAY - Update auction_participants table
     await supabase
       .from('auction_participants')
-      .update({ 
-        is_ready: newReadyState
-      })
-      .eq('participant_id', currentParticipant.participant_id);
+      .update({ is_ready: newReadyState })
+      .eq('participant_id', access.participantId);
     
-    // Refresh participants list
     loadParticipants();
   };
 
@@ -204,9 +217,12 @@ export default function LobbyPage() {
     );
   }
 
+  if (!access) {
+    return <div style={{ padding: '20px' }}>Checking access...</div>;
+  }
+
   const readyCount = participants.filter(p => p.is_ready).length;
   const allReady = readyCount === participants.length && participants.length > 0;
-  const isAdmin = currentParticipant?.managers.role === 'admin';
 
   return (
     <div style={{
@@ -238,6 +254,16 @@ export default function LobbyPage() {
             </h1>
             <p style={{ color: '#666', fontSize: '12px' }}>
               {activeAuction.auction_name || 'Auction Lobby'}
+              {access.isAdmin && !access.isParticipant && (
+                <span style={{ marginLeft: '10px', color: '#ff9800', fontWeight: 'bold' }}>
+                  👑 Viewing as Admin
+                </span>
+              )}
+              {access.isAdmin && access.isParticipant && (
+                <span style={{ marginLeft: '10px', color: '#4caf50', fontWeight: 'bold' }}>
+                  👑 Admin & Playing
+                </span>
+              )}
             </p>
           </div>
           <button
@@ -312,7 +338,7 @@ export default function LobbyPage() {
                     <div>
                       <div style={{ fontWeight: 'bold', color: '#02084b', fontSize: '13px' }}>
                         {participant.managers.manager_name}
-                        {participant.managers.role === 'admin' && ' (Admin)'}
+                        {participant.managers.role === 'admin' && ' 👑'}
                         {isCurrentUser && ' (You)'}
                       </div>
                       <div style={{ fontSize: '11px', color: '#666' }}>
@@ -344,25 +370,29 @@ export default function LobbyPage() {
           justifyContent: 'center',
           marginBottom: '12px',
         }}>
-          {currentParticipant && (
+          {access.isParticipant && (
             <button
               onClick={toggleReady}
               style={{
                 padding: '10px 30px',
                 fontSize: '14px',
                 fontWeight: 'bold',
-                background: currentParticipant.is_ready ? '#f57c00' : '#2e7d32',
+                background: participants.find(p => p.participant_id === access.participantId)?.is_ready 
+                  ? '#f57c00' 
+                  : '#2e7d32',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
               }}
             >
-              {currentParticipant.is_ready ? '❌ Not Ready' : '✅ I\'m Ready'}
+              {participants.find(p => p.participant_id === access.participantId)?.is_ready 
+                ? '❌ Not Ready' 
+                : '✅ I\'m Ready'}
             </button>
           )}
 
-          {isAdmin && activeAuction.status === 'draft' && (
+          {access.canControl && activeAuction.status === 'draft' && (
             <button
               onClick={startAuction}
               disabled={!allReady}

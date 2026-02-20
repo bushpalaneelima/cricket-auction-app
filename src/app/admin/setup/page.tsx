@@ -77,16 +77,17 @@ export default function AuctionSetupPage() {
   };
 
   const loadManagers = async () => {
+    // ✅ FIXED: Remove role filter - show ALL managers including admins
     const { data } = await supabase
       .from('managers')
       .select('*')
-      .eq('role', 'manager') // Only regular managers, not admins
       .order('manager_name');
 
     if (data) {
       setAllManagers(data);
-      // Pre-select all managers by default
-      setSelectedManagers(data.map(m => m.manager_id));
+      // Pre-select only regular managers (not admins) by default
+      const regularManagers = data.filter(m => m.role !== 'admin').map(m => m.manager_id);
+      setSelectedManagers(regularManagers);
     }
   };
 
@@ -105,7 +106,7 @@ export default function AuctionSetupPage() {
     }
 
     if (selectedManagers.length === 0) {
-      alert('Please select at least one manager!');
+      alert('Please select at least one participant!');
       return;
     }
 
@@ -368,7 +369,7 @@ export default function AuctionSetupPage() {
             </div>
           </div>
 
-          {/* ✅ NEW: Manager Selection */}
+          {/* ✅ Manager Selection */}
           <div style={{ marginBottom: '15px' }}>
             <label style={{
               display: 'block',
@@ -406,6 +407,7 @@ export default function AuctionSetupPage() {
                   />
                   <span style={{ fontSize: '14px', color: '#02084b' }}>
                     {mgr.manager_name}
+                    {mgr.role === 'admin' && ' 👑'}
                   </span>
                 </label>
               ))}
