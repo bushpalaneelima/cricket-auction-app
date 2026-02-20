@@ -4,51 +4,57 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 
-interface Manager {
-  manager_id: number;
-  manager_name: string;
-  email: string;
-  role: string;
+interface Participant {
+  participant_id: number;
   starting_budget: number;
   current_budget: number;
-  team_name?: string;
   is_ready: boolean;
-  is_online: boolean;
+  managers: {
+    manager_id: number;
+    manager_name: string;
+    email: string;
+    role: string;
+  };
 }
 
 export default function LobbyPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<Manager | null>(null);
-  const [managers, setManagers] = useState<Manager[]>([]);
-  const [isReady, setIsReady] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [currentParticipant, setCurrentParticipant] = useState<Participant | null>(null);
+  const [participants, setParticipants] = useState<Participant[]>([]);
   const [activeAuction, setActiveAuction] = useState<any>(null);
-  const [auctionId, setAuctionId] = useState<number | null>(null);
 
   useEffect(() => {
     checkAuth();
-    loadManagers();
     checkActiveAuction();
-    
-    // Subscribe to real-time changes
-    const channel = supabase
-      .channel('lobby-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'managers' 
-      }, () => {
-        loadManagers();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   useEffect(() => {
-    // Subscribe to auction changes
+    if (activeAuction) {
+      loadParticipants();
+      
+      // Subscribe to real-time changes in auction_participants
+      const channel = supabase
+        .channel('lobby-changes')
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'auction_participants',
+          filter: `auction_id=eq.${activeAuction.auction_id}`
+        }, () => {
+          loadParticipants();
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [activeAuction]);
+
+  useEffect(() => {
+    // Subscribe to auction status changes
     const auctionChannel = supabase
       .channel('auction-status')
       .on('postgres_changes', {
@@ -73,109 +79,71 @@ export default function LobbyPage() {
       return;
     }
 
-    const { data: mgr } = await supabase
-      .from('managers')
-      .select('*')
-      .eq('email', session.user.email)
-      .single();
-
-    if (!mgr) {
-      router.push('/login');
-      return;
-    }
-
-    setCurrentUser(mgr);
-    setIsReady(mgr.is_ready || false);
+    setCurrentUserEmail(session.user.email || null);
     setLoading(false);
-  };
-
-  const loadManagers = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-  
-    const { data } = await supabase
-      .from('managers')
-      .select('*')
-      .order('manager_name');
-
-    if (data) {
-      const managersWithStatus = data.map(m => ({
-        ...m,
-        is_online: true,
-      }));
-      setManagers(managersWithStatus);
-    
-      if (session?.user?.email) {
-        const current = managersWithStatus.find(m => m.email === session.user.email);
-        if (current) {
-          setCurrentUser(current);
-          setIsReady(current.is_ready || false);
-        }
-      }
-    }
   };
 
   const checkActiveAuction = async () => {
     const { data } = await supabase
       .from('auctions')
       .select('*')
-      .in('status', ['active', 'round1', 'round2'])
+      .in('status', ['draft', 'active', 'round1', 'round2'])
       .order('scheduled_at', { ascending: false })
       .limit(1)
       .single();
 
     setActiveAuction(data);
-    
-    // Set auction ID for participant tracking
+  };
+
+  const loadParticipants = async () => {
+    if (!activeAuction) return;
+
+    // ✅ NEW WAY - Query auction_participants with manager details
+    const { data } = await supabase
+      .from('auction_participants')
+      .select(`
+        participant_id,
+        starting_budget,
+        current_budget,
+        is_ready,
+        managers (
+          manager_id,
+          manager_name,
+          email,
+          role
+        )
+      `)
+      .eq('auction_id', activeAuction.auction_id)
+      .order('managers(manager_name)');
+
     if (data) {
-      setAuctionId(data.auction_id);
-    } else {
-      setAuctionId(null);
+      setParticipants(data as any);
+      
+      // Find current user's participant record
+      if (currentUserEmail) {
+        const current = data.find((p: any) => p.managers.email === currentUserEmail);
+        if (current) {
+          setCurrentParticipant(current as any);
+        }
+      }
     }
   };
-  
+
   const toggleReady = async () => {
-    if (!currentUser || !auctionId) return;
+    if (!currentParticipant || !activeAuction) return;
     
-    const newReadyState = !isReady;
-    setIsReady(newReadyState);
+    const newReadyState = !currentParticipant.is_ready;
     
+    // ✅ NEW WAY - Update auction_participants table
     await supabase
-      .from('managers')
+      .from('auction_participants')
       .update({ 
-        is_ready: newReadyState,
-        updated_at: new Date().toISOString()
+        is_ready: newReadyState
       })
-      .eq('manager_id', currentUser.manager_id);
+      .eq('participant_id', currentParticipant.participant_id);
     
-    // Add/remove from auction participants
-    if (newReadyState) {
-      // Add to auction_participants (insert only if not exists)
-      const { error } = await supabase
-        .from('auction_participants')
-        .upsert({
-          auction_id: auctionId,
-          manager_id: currentUser.manager_id,
-        }, {
-          onConflict: 'auction_id,manager_id'
-        });
-
-      if (error) {
-        console.error('Error adding participant:', error);
-      } else {
-        console.log('✅ Added to auction participants');
-      }
-    } else {
-      // Remove from auction_participants
-      await supabase
-        .from('auction_participants')
-        .delete()
-        .eq('auction_id', auctionId)
-        .eq('manager_id', currentUser.manager_id);
-
-      console.log('❌ Removed from auction participants');
-    }
-    
-    loadManagers();
+    // Refresh participants list
+    loadParticipants();
   };
 
   const handleLogout = async () => {
@@ -201,9 +169,44 @@ export default function LobbyPage() {
     );
   }
 
-  const playingManagers = managers.filter(m => m.starting_budget > 0);
-  const readyCount = playingManagers.filter(m => m.is_ready).length;
-  const allReady = readyCount === playingManagers.length;
+  if (!activeAuction) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #02084b 0%, #3E5B99 100%)',
+        color: 'white',
+        padding: '20px',
+        textAlign: 'center',
+      }}>
+        <h1 style={{ fontSize: '32px', marginBottom: '15px' }}>No Active Auction</h1>
+        <p style={{ marginBottom: '20px', opacity: 0.8 }}>
+          Wait for admin to create an auction
+        </p>
+        <button
+          onClick={() => router.push('/home')}
+          style={{
+            padding: '10px 30px',
+            background: 'white',
+            color: '#02084b',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+          }}
+        >
+          Go to Home
+        </button>
+      </div>
+    );
+  }
+
+  const readyCount = participants.filter(p => p.is_ready).length;
+  const allReady = readyCount === participants.length && participants.length > 0;
+  const isAdmin = currentParticipant?.managers.role === 'admin';
 
   return (
     <div style={{
@@ -231,10 +234,10 @@ export default function LobbyPage() {
         }}>
           <div>
             <h1 style={{ fontSize: '24px', color: '#02084b', marginBottom: '3px' }}>
-              🏏 Cricket Auction Lobby
+              🎯 AuctionLab Lobby
             </h1>
             <p style={{ color: '#666', fontSize: '12px' }}>
-              Welcome, {currentUser?.manager_name}!
+              {activeAuction.auction_name || 'Auction Lobby'}
             </p>
           </div>
           <button
@@ -262,23 +265,23 @@ export default function LobbyPage() {
           textAlign: 'center',
         }}>
           <h2 style={{ color: '#02084b', marginBottom: '5px', fontSize: '18px' }}>
-            Managers Ready: {readyCount}/{playingManagers.length}
+            Participants Ready: {readyCount}/{participants.length}
           </h2>
           {allReady ? (
             <p style={{ color: '#2e7d32', fontWeight: 'bold', fontSize: '13px', margin: 0 }}>
-              ✅ All managers ready! Admin can start auction.
+              ✅ All participants ready! Admin can start auction.
             </p>
           ) : (
             <p style={{ color: '#666', fontSize: '12px', margin: 0 }}>
-              Waiting for all managers...
+              Waiting for all participants...
             </p>
           )}
         </div>
 
-        {/* Manager List */}
+        {/* Participant List */}
         <div style={{ marginBottom: '15px' }}>
           <h3 style={{ color: '#02084b', marginBottom: '10px', fontSize: '16px' }}>
-            Managers ({playingManagers.length})
+            Participants ({participants.length})
           </h3>
           <div style={{
             display: 'grid',
@@ -286,50 +289,51 @@ export default function LobbyPage() {
             maxHeight: '280px',
             overflowY: 'auto',
           }}>
-            {playingManagers.map((manager) => (
-              <div
-                key={manager.manager_id}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '10px',
-                  background: currentUser?.manager_id === manager.manager_id ? '#e3f2fd' : '#f8f9fa',
-                  borderRadius: '6px',
-                  border: currentUser?.manager_id === manager.manager_id 
-                    ? '2px solid #02084b' 
-                    : '1px solid #ddd',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '16px' }}>
-                    {manager.is_online ? '🟢' : '⚫'}
-                  </span>
-                  <div>
-                    <div style={{ fontWeight: 'bold', color: '#02084b', fontSize: '13px' }}>
-                      {manager.manager_name}
-                      {manager.role === 'admin' && ' (Admin)'}
-                      {currentUser?.manager_id === manager.manager_id && ' (You)'}
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#666' }}>
-                      {manager.current_budget} pts
-                      {manager.team_name && ` • ${manager.team_name}`}
+            {participants.map((participant) => {
+              const isCurrentUser = participant.managers.email === currentUserEmail;
+              
+              return (
+                <div
+                  key={participant.participant_id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '10px',
+                    background: isCurrentUser ? '#e3f2fd' : '#f8f9fa',
+                    borderRadius: '6px',
+                    border: isCurrentUser 
+                      ? '2px solid #02084b' 
+                      : '1px solid #ddd',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '16px' }}>🟢</span>
+                    <div>
+                      <div style={{ fontWeight: 'bold', color: '#02084b', fontSize: '13px' }}>
+                        {participant.managers.manager_name}
+                        {participant.managers.role === 'admin' && ' (Admin)'}
+                        {isCurrentUser && ' (You)'}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#666' }}>
+                        Budget: {participant.current_budget} pts
+                      </div>
                     </div>
                   </div>
+                  <div>
+                    {participant.is_ready ? (
+                      <span style={{ color: '#2e7d32', fontWeight: 'bold', fontSize: '12px' }}>
+                        ✅ Ready
+                      </span>
+                    ) : (
+                      <span style={{ color: '#f57c00', fontSize: '12px' }}>
+                        ⏳ Waiting
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  {manager.is_ready ? (
-                    <span style={{ color: '#2e7d32', fontWeight: 'bold', fontSize: '12px' }}>
-                      ✅ Ready
-                    </span>
-                  ) : (
-                    <span style={{ color: '#f57c00', fontSize: '12px' }}>
-                      ⏳ Waiting
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -340,25 +344,25 @@ export default function LobbyPage() {
           justifyContent: 'center',
           marginBottom: '12px',
         }}>
-          {currentUser && currentUser.current_budget > 0 && (
+          {currentParticipant && (
             <button
               onClick={toggleReady}
               style={{
                 padding: '10px 30px',
                 fontSize: '14px',
                 fontWeight: 'bold',
-                background: isReady ? '#f57c00' : '#2e7d32',
+                background: currentParticipant.is_ready ? '#f57c00' : '#2e7d32',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
               }}
             >
-              {isReady ? '❌ Not Ready' : '✅ I\'m Ready'}
+              {currentParticipant.is_ready ? '❌ Not Ready' : '✅ I\'m Ready'}
             </button>
           )}
 
-          {currentUser?.role === 'admin' && !activeAuction && (
+          {isAdmin && activeAuction.status === 'draft' && (
             <button
               onClick={startAuction}
               disabled={!allReady}
@@ -377,7 +381,7 @@ export default function LobbyPage() {
             </button>
           )}
 
-          {activeAuction && (
+          {activeAuction.status !== 'draft' && (
             <button
               onClick={() => router.push('/auction')}
               style={{
