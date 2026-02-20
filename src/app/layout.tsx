@@ -13,22 +13,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cricket Auction Hub",
-  description: "Live cricket player auction platform for fantasy cricket league",
+  title: "AuctionLab - Professional Auction Engine",
+  description: "Professional auction platform for entertainment and education by NB Blue Studios",
   icons: {
     icon: '/favicon.ico',
   },
   openGraph: {
-    title: "Cricket Auction Hub",
-    description: "Live cricket player auction platform for fantasy cricket league",
+    title: "AuctionLab - Professional Auction Engine",
+    description: "Professional auction platform for entertainment and education",
     url: "https://auction.nbbluestudios.com",
-    siteName: "Cricket Auction Hub",
+    siteName: "AuctionLab",
     images: [
       {
-        url: "/og-image.png", // You'll need to add this image
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Cricket Auction Hub",
+        alt: "AuctionLab by NB Blue Studios",
       },
     ],
     locale: "en_IN",
@@ -36,8 +36,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cricket Auction Hub",
-    description: "Live cricket player auction platform for fantasy cricket league",
+    title: "AuctionLab - Professional Auction Engine",
+    description: "Professional auction platform for entertainment and education",
     images: ["/og-image.png"],
   },
 };
