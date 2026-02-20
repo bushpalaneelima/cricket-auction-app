@@ -164,10 +164,18 @@ export default function LobbyPage() {
     router.push('/login');
   };
 
-  const startAuction = () => {
-    router.push('/admin/setup');
-  };
-
+  const startAuction = async () => {
+  if (!activeAuction) return;
+  
+  // Update auction status to 'active'
+  await supabase
+    .from('auctions')
+    .update({ status: 'active' })
+    .eq('auction_id', activeAuction.auction_id);
+  
+  // Redirect to auction page
+  router.push('/auction');
+};
   if (loading) {
     return (
       <div style={{ 
