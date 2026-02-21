@@ -217,6 +217,8 @@ useEffect(() => {
       .select('timer_seconds, is_paused')
       .eq('auction_id', auctionState.auction_id)
       .single();
+    
+      console.log('⏱️ Tick:', currentAuction?.timer_seconds); // ← ADD THIS
 
     if (!currentAuction) return;
     
