@@ -182,31 +182,26 @@ function AuctionPageContent() {
   const refreshCurrentParticipant = async () => {
   if (!currentParticipant) return;
   
-  const { data: updatedParticipant, error } = await supabase
-    .from('auction_participants')
-    .select(`
-      participant_id,
-      manager_id,
-      current_budget,
-      starting_budget,
-      managers!inner (
-        manager_id,
-        manager_name,
-        email,
-        role,
-        team_name
-      )
-    `)
-    .eq('participant_id', currentParticipant.participant_id)
-    .single();
-  
-  if (error) {
-    console.error('Error refreshing participant:', error);
-    return;
-  }
-  
-  if (updatedParticipant) {
-    setCurrentParticipant(updatedParticipant as any);
+  try {
+    const { data: updatedParticipant, error } = await supabase
+      .from('auction_participants')
+      .select('participant_id, manager_id, current_budget, starting_budget')
+      .eq('participant_id', currentParticipant.participant_id)
+      .single();
+    
+    if (error) {
+      console.error('Error refreshing participant:', error);
+      return;
+    }
+    
+    if (updatedParticipant) {
+      setCurrentParticipant({
+        ...updatedParticipant,
+        managers: currentParticipant.managers
+      } as any);
+    }
+  } catch (err) {
+    console.error('Exception:', err);
   }
 };
 
