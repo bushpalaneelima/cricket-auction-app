@@ -118,7 +118,7 @@ function AuctionPageContent() {
                 manager_id,
                 current_budget,
                 starting_budget,
-                managers!inner (
+                managers (
                   manager_id,
                   manager_name,
                   email,
@@ -331,7 +331,7 @@ useEffect(() => {
           manager_id,
           current_budget,
           starting_budget,
-          managers!inner (
+          managers (
             manager_id,
             manager_name,
             email,
@@ -420,7 +420,7 @@ useEffect(() => {
           manager_id,
           current_budget,
           starting_budget,
-          managers!inner (
+          managers (
             manager_id,
             manager_name,
             email,
@@ -796,7 +796,7 @@ useEffect(() => {
             participant_id,
             manager_id,
             current_budget,
-            managers!inner (
+            managers (
               manager_name,
               team_name
             )
