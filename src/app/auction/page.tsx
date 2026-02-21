@@ -71,10 +71,12 @@ function AuctionPageContent() {
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [auctionState, setAuctionState] = useState<AuctionState | null>(null);
   const [currentBidder, setCurrentBidder] = useState<Participant | null>(null);
+  const [displayTimer, setDisplayTimer] = useState<number>(30);
   const [myTeam, setMyTeam] = useState<TeamPlayer[]>([]);
   const [isFrozen, setIsFrozen] = useState(false);
   const [freezeMessage, setFreezeMessage] = useState('');
   const [round1Complete, setRound1Complete] = useState(false);
+  
   
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
@@ -92,6 +94,24 @@ function AuctionPageContent() {
       setSelectedRole(auctionState.role_filter || '');
     }
   }, [auctionState?.class_filter, auctionState?.role_filter]);
+  useEffect(() => {
+  if (!auctionState) return;
+
+  // Reset display timer whenever DB timer resets or player changes
+  setDisplayTimer(auctionState.timer_seconds ?? 0);
+
+  if (auctionState.is_paused) return;
+
+  const interval = setInterval(() => {
+    setDisplayTimer((prev) => (prev > 0 ? prev - 1 : 0));
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [
+  auctionState?.timer_seconds,
+  auctionState?.is_paused,
+  auctionState?.current_player_id,
+]);
 
   useEffect(() => {
     if (!auctionState || !currentParticipant) return;
@@ -149,20 +169,28 @@ function AuctionPageContent() {
           }
         }
       })
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'team_players',
-      }, () => {
-        console.log('Player sold');
-        if (currentParticipant) {
-          refreshCurrentParticipant();
-          loadMyTeam(currentParticipant.participant_id);
-          if (auctionState) {
-            loadPlayerStats(auctionState);
-          }
-        }
-      })
+      .on(
+  'postgres_changes',
+  {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'team_players',
+    filter: `auction_id=eq.${auctionState.auction_id}`,
+  },
+  () => {
+    console.log('Player sold (this auction)');
+    if (currentParticipant) {
+      refreshCurrentParticipant();
+      loadMyTeam(currentParticipant.participant_id);
+      if (auctionState) {
+        loadPlayerStats(auctionState);
+      }
+    } else if (auctionState) {
+      // Admin-only view (no participant)
+      loadPlayerStats(auctionState);
+    }
+  }
+)
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
@@ -907,13 +935,6 @@ useEffect(() => {
   };
 
   const getTimerColor = () => {
-    if (!auctionState) return '#666';
-    const timer = auctionState.timer_seconds;
-    if (timer > 20) return '#2e7d32';
-    if (timer > 10) return '#f57c00';
-    return '#d32f2f';
-  };
-
   const getRoleCounts = (): RoleCounts => {
     const counts: RoleCounts = {
       'Batsman': 0,
@@ -1212,10 +1233,10 @@ useEffect(() => {
             <div style={{
               fontSize: '48px',
               fontWeight: 'bold',
-              color: getTimerColor(),
+              color: getTimerColor(displayTimer),
             }}>
-              {auctionState.timer_seconds}
-            </div>
+            {displayTimer}
+          </div>
           </div>
 
           <div style={{
