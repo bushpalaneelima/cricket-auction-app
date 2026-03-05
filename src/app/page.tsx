@@ -24,11 +24,9 @@ export default function LandingPage() {
     e.preventDefault();
     
     // TODO: Send email to bushpalaneelima@gmail.com
-    // For now, just show success message
     console.log('Form submitted:', formData);
     setFormSubmitted(true);
     
-    // Reset form after 3 seconds
     setTimeout(() => {
       setFormData({
         name: '',
@@ -149,7 +147,7 @@ export default function LandingPage() {
         padding: '20px',
         position: 'relative',
       }}>
-        {/* Login Button - Top Right */}
+        {/* Host Login Button - Top Right */}
         <button
           onClick={() => router.push('/login')}
           style={{
@@ -167,7 +165,7 @@ export default function LandingPage() {
             boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
           }}
         >
-          Login
+          Host Login
         </button>
 
         <div style={{
@@ -186,11 +184,12 @@ export default function LandingPage() {
           </h1>
           
           <p style={{
-            fontSize: '18px',
+            fontSize: '20px',
             marginBottom: '8px',
             color: 'rgba(255,255,255,0.95)',
+            fontWeight: '500',
           }}>
-            Professional Auction Engine
+            Strategic Auction Simulation Platform
           </p>
 
           <p style={{
@@ -201,7 +200,7 @@ export default function LandingPage() {
             by NB Blue Studios
           </p>
 
-          {/* Two Use Cases */}
+          {/* Two Use Cases - Improved Contrast */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
@@ -209,11 +208,12 @@ export default function LandingPage() {
             marginBottom: '40px',
           }}>
             <div style={{
-              background: 'rgba(255,255,255,0.15)',
+              background: 'rgba(255,255,255,0.2)',
               padding: '30px',
               borderRadius: '12px',
               backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
             }}>
               <div style={{ fontSize: '42px', marginBottom: '15px' }}>🎪</div>
               <h3 style={{ 
@@ -227,13 +227,13 @@ export default function LandingPage() {
               <p style={{ 
                 fontSize: '14px', 
                 marginBottom: '15px',
-                color: 'rgba(255,255,255,0.9)',
+                color: 'rgba(255,255,255,0.95)',
               }}>
                 Live auction experience
               </p>
               <p style={{ 
                 fontSize: '12px', 
-                color: 'rgba(255,255,255,0.7)',
+                color: 'rgba(255,255,255,0.85)',
                 lineHeight: '1.6',
               }}>
                 Friend circles • Corporate teams • Fun & competition
@@ -241,11 +241,12 @@ export default function LandingPage() {
             </div>
 
             <div style={{
-              background: 'rgba(255,255,255,0.15)',
+              background: 'rgba(255,255,255,0.2)',
               padding: '30px',
               borderRadius: '12px',
               backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
             }}>
               <div style={{ fontSize: '42px', marginBottom: '15px' }}>🎓</div>
               <h3 style={{ 
@@ -259,13 +260,13 @@ export default function LandingPage() {
               <p style={{ 
                 fontSize: '14px', 
                 marginBottom: '15px',
-                color: 'rgba(255,255,255,0.9)',
+                color: 'rgba(255,255,255,0.95)',
               }}>
                 Strategy & budget allocation
               </p>
               <p style={{ 
                 fontSize: '12px', 
-                color: 'rgba(255,255,255,0.7)',
+                color: 'rgba(255,255,255,0.85)',
                 lineHeight: '1.6',
               }}>
                 MBA programs • Corporate L&D • Decision-making
@@ -273,7 +274,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons - Improved Text */}
           <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginBottom: '40px' }}>
             <button
               onClick={() => router.push('/login')}
@@ -289,7 +290,7 @@ export default function LandingPage() {
                 boxShadow: '0 4px 12px rgba(40, 167, 69, 0.3)',
               }}
             >
-              Get Started →
+              Start Your Auction →
             </button>
             <button
               onClick={scrollToContact}
@@ -317,7 +318,7 @@ export default function LandingPage() {
       }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           <h2 style={{
-            fontSize: '36px',
+            fontSize: '40px',
             textAlign: 'center',
             marginBottom: '50px',
             fontWeight: 'bold',
@@ -331,7 +332,7 @@ export default function LandingPage() {
           }}>
             {[
               { num: '1', title: 'Create', desc: 'Admin sets up the auction session' },
-              { num: '2', title: 'Select', desc: 'Choose participants (up to 12 per auction)' },
+              { num: '2', title: 'Invite', desc: 'Invite participants (up to 12 teams)' },
               { num: '3', title: 'Allocate', desc: 'Strategically invest your points' },
               { num: '4', title: 'Track', desc: 'Monitor performance and rankings' },
             ].map(step => (
@@ -363,13 +364,13 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Key Features */}
+      {/* Key Features - Narrower Cards */}
       <div style={{
         padding: '80px 20px',
       }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <h2 style={{
-            fontSize: '36px',
+            fontSize: '40px',
             textAlign: 'center',
             marginBottom: '50px',
             fontWeight: 'bold',
@@ -379,7 +380,7 @@ export default function LandingPage() {
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '30px',
+            gap: '25px',
           }}>
             {[
               { icon: '⚡', title: 'Real-Time Resource Allocation', desc: 'Live bidding with 30-second timer and instant updates' },
@@ -390,18 +391,18 @@ export default function LandingPage() {
               { icon: '🌐', title: 'Remote & In-Person', desc: 'Play from anywhere or gather in one location' },
             ].map(feature => (
               <div key={feature.title} style={{
-                padding: '30px',
+                padding: '25px',
                 background: 'rgba(255,255,255,0.1)',
                 borderRadius: '12px',
                 display: 'flex',
                 gap: '20px',
               }}>
-                <div style={{ fontSize: '40px' }}>{feature.icon}</div>
+                <div style={{ fontSize: '36px', flexShrink: 0 }}>{feature.icon}</div>
                 <div>
-                  <h3 style={{ fontSize: '18px', marginBottom: '10px', fontWeight: 'bold' }}>
+                  <h3 style={{ fontSize: '17px', marginBottom: '8px', fontWeight: 'bold' }}>
                     {feature.title}
                   </h3>
-                  <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.8)', lineHeight: '1.6' }}>
+                  <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.8)', lineHeight: '1.5' }}>
                     {feature.desc}
                   </p>
                 </div>
@@ -411,19 +412,26 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Pricing Preview */}
+      {/* Pricing Preview - Added Context */}
       <div style={{
         background: 'rgba(255,255,255,0.05)',
         padding: '80px 20px',
       }}>
         <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{
-            fontSize: '36px',
-            marginBottom: '30px',
+            fontSize: '40px',
+            marginBottom: '20px',
             fontWeight: 'bold',
           }}>
             Simple Pricing
           </h2>
+          <p style={{
+            fontSize: '16px',
+            color: 'rgba(255,255,255,0.8)',
+            marginBottom: '40px',
+          }}>
+            Ideal for MBA workshops, corporate simulations, and team events
+          </p>
           <div style={{
             background: 'rgba(255,255,255,0.1)',
             padding: '40px',
@@ -463,7 +471,7 @@ export default function LandingPage() {
               onClick={() => {
                 const faqEl = document.getElementById('faq');
                 faqEl?.scrollIntoView({ behavior: 'smooth' });
-                setTimeout(() => setExpandedFAQ(5), 500); // Open pricing FAQ
+                setTimeout(() => setExpandedFAQ(5), 500);
               }}
               style={{
                 padding: '12px 30px',
@@ -491,7 +499,7 @@ export default function LandingPage() {
       }}>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <h2 style={{
-            fontSize: '36px',
+            fontSize: '40px',
             textAlign: 'center',
             marginBottom: '50px',
             fontWeight: 'bold',
@@ -547,14 +555,14 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Contact Form */}
+      {/* Contact Form - Improved Field Visibility */}
       <div id="contact" style={{
         background: 'rgba(255,255,255,0.05)',
         padding: '80px 20px',
       }}>
         <div style={{ maxWidth: '600px', margin: '0 auto' }}>
           <h2 style={{
-            fontSize: '36px',
+            fontSize: '40px',
             textAlign: 'center',
             marginBottom: '20px',
             fontWeight: 'bold',
@@ -590,7 +598,13 @@ export default function LandingPage() {
               borderRadius: '12px',
             }}>
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontSize: '14px',
+                  color: 'rgba(255,255,255,0.95)',
+                  fontWeight: '500',
+                }}>
                   Name *
                 </label>
                 <input
@@ -602,15 +616,23 @@ export default function LandingPage() {
                     width: '100%',
                     padding: '12px',
                     borderRadius: '6px',
-                    border: 'none',
+                    border: '1px solid rgba(255,255,255,0.3)',
                     fontSize: '14px',
                     boxSizing: 'border-box',
+                    background: 'rgba(255,255,255,0.12)',
+                    color: 'white',
                   }}
                 />
               </div>
 
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontSize: '14px',
+                  color: 'rgba(255,255,255,0.95)',
+                  fontWeight: '500',
+                }}>
                   Email *
                 </label>
                 <input
@@ -622,15 +644,23 @@ export default function LandingPage() {
                     width: '100%',
                     padding: '12px',
                     borderRadius: '6px',
-                    border: 'none',
+                    border: '1px solid rgba(255,255,255,0.3)',
                     fontSize: '14px',
                     boxSizing: 'border-box',
+                    background: 'rgba(255,255,255,0.12)',
+                    color: 'white',
                   }}
                 />
               </div>
 
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontSize: '14px',
+                  color: 'rgba(255,255,255,0.95)',
+                  fontWeight: '500',
+                }}>
                   Organization
                 </label>
                 <input
@@ -641,15 +671,23 @@ export default function LandingPage() {
                     width: '100%',
                     padding: '12px',
                     borderRadius: '6px',
-                    border: 'none',
+                    border: '1px solid rgba(255,255,255,0.3)',
                     fontSize: '14px',
                     boxSizing: 'border-box',
+                    background: 'rgba(255,255,255,0.12)',
+                    color: 'white',
                   }}
                 />
               </div>
 
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontSize: '14px',
+                  color: 'rgba(255,255,255,0.95)',
+                  fontWeight: '500',
+                }}>
                   Event Type
                 </label>
                 <select
@@ -659,20 +697,29 @@ export default function LandingPage() {
                     width: '100%',
                     padding: '12px',
                     borderRadius: '6px',
-                    border: 'none',
+                    border: '1px solid rgba(255,255,255,0.3)',
                     fontSize: '14px',
                     boxSizing: 'border-box',
+                    background: 'rgba(255,255,255,0.12)',
+                    color: 'white',
+                    cursor: 'pointer',
                   }}
                 >
-                  <option value="">Select...</option>
-                  <option value="entertainment">Entertainment</option>
-                  <option value="academic">Academic</option>
-                  <option value="corporate">Corporate</option>
+                  <option value="" style={{ background: '#02084b' }}>Select...</option>
+                  <option value="entertainment" style={{ background: '#02084b' }}>Entertainment</option>
+                  <option value="academic" style={{ background: '#02084b' }}>Academic</option>
+                  <option value="corporate" style={{ background: '#02084b' }}>Corporate</option>
                 </select>
               </div>
 
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontSize: '14px',
+                  color: 'rgba(255,255,255,0.95)',
+                  fontWeight: '500',
+                }}>
                   Number of Participants
                 </label>
                 <input
@@ -684,15 +731,23 @@ export default function LandingPage() {
                     width: '100%',
                     padding: '12px',
                     borderRadius: '6px',
-                    border: 'none',
+                    border: '1px solid rgba(255,255,255,0.3)',
                     fontSize: '14px',
                     boxSizing: 'border-box',
+                    background: 'rgba(255,255,255,0.12)',
+                    color: 'white',
                   }}
                 />
               </div>
 
               <div style={{ marginBottom: '30px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontSize: '14px',
+                  color: 'rgba(255,255,255,0.95)',
+                  fontWeight: '500',
+                }}>
                   Message *
                 </label>
                 <textarea
@@ -704,11 +759,13 @@ export default function LandingPage() {
                     width: '100%',
                     padding: '12px',
                     borderRadius: '6px',
-                    border: 'none',
+                    border: '1px solid rgba(255,255,255,0.3)',
                     fontSize: '14px',
                     fontFamily: 'inherit',
                     boxSizing: 'border-box',
                     resize: 'vertical',
+                    background: 'rgba(255,255,255,0.12)',
+                    color: 'white',
                   }}
                 />
               </div>
