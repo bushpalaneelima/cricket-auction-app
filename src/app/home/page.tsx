@@ -113,7 +113,7 @@ export default function HomePage() {
         }}>
           <div>
             <h1 style={{ fontSize: '24px', color: '#02084b', marginBottom: '3px' }}>
-              🏏 Cricket Auction Hub
+            ♟️ Game of Gambits
             </h1>
             <p style={{ color: '#666', fontSize: '13px' }}>
               Welcome back, <strong>{manager?.manager_name}</strong>!
