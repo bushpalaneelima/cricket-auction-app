@@ -58,7 +58,7 @@ export default function UserManualPage() {
               📖 User Manual
             </h1>
             <p style={{ fontSize: '14px', opacity: 0.9, margin: 0 }}>
-              AuctionLab - Professional Auction Simulation Engine
+              Game of Gambits - Strategic Decision Simulation
             </p>
           </div>
           <button
@@ -343,7 +343,7 @@ function RulesRegulations() {
           🎯 Basic Setup
         </h3>
         <div style={{ paddingLeft: '20px', lineHeight: '1.8' }}>
-          <p><strong>Total Participants:</strong> 8 managers per tournament</p>
+          <p><strong>Total Participants:</strong> 12 managers per tournament</p>
           <p><strong>Player Pool:</strong> 120 total players available</p>
           <p><strong>Starting Budget:</strong> 1000 points per manager</p>
           <p><strong>Team Size:</strong> Minimum 11 players, Maximum 15 players</p>
@@ -361,9 +361,9 @@ function RulesRegulations() {
             Three Player Classes:
           </h4>
           <ul style={{ paddingLeft: '20px' }}>
-            <li><strong>Platinum Players:</strong> Base price 8 points</li>
-            <li><strong>Gold Players:</strong> Base price 6 points</li>
-            <li><strong>Silver Players:</strong> Base price 4 points</li>
+            <li><strong>Platinum Players:</strong> Base price 80 points</li>
+            <li><strong>Gold Players:</strong> Base price 40 points</li>
+            <li><strong>Silver Players:</strong> Base price 20 points</li>
           </ul>
 
           <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px', marginTop: '15px' }}>
@@ -462,6 +462,7 @@ function RulesRegulations() {
           <p><strong>Selection Phase:</strong> After Round 1, each manager can select up to 5 unsold players</p>
           <p><strong>Selection Method:</strong> First-come-first-served. Once a player is selected, others cannot choose them</p>
           <p><strong>Base Price:</strong> 0 points (FREE auction - players start at 0)</p>
+          <p><strong>Player Classes:</strong> Classes do not matter in Round 2</p>
           <p><strong>Auction Order:</strong> Random order (not organized by class or role)</p>
           <p><strong>Purpose:</strong> Give managers a chance to fill gaps in their teams with remaining budget</p>
         </div>
