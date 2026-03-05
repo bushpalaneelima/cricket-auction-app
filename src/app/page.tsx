@@ -231,7 +231,7 @@ export default function LandingPage() {
                 fontWeight: 'bold',
                 color: '#ffffff',
               }}>
-                Entertainment Mode
+                Competitive Mode
               </h3>
               <p style={{ 
                 fontSize: '14px', 

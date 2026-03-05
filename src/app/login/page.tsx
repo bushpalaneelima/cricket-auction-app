@@ -104,7 +104,7 @@ export default function LoginPage() {
           color: '#02084b',
           fontWeight: '700',
         }}>
-          🏏 Cricket Auction Hub
+          ♟️ Game of Gambits
         </h1>
         
         <p style={{
@@ -113,7 +113,7 @@ export default function LoginPage() {
           fontSize: '16px',
           fontWeight: '400',
         }}>
-          Sign in to participate in the live auction
+          Strategic Decision Simulation
         </p>
 
         {error && (
