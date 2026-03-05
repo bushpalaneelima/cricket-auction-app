@@ -251,7 +251,7 @@ export default function HomePage() {
         {/* Quick Actions */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: 'repeat(4, 1fr)',
           gap: '15px',
           marginBottom: '15px',
         }}>
@@ -295,7 +295,7 @@ export default function HomePage() {
               Download auction data
             </p>
             <button
-              onClick={() => router.push('/reports')}  // ← CORRECT!
+              onClick={() => router.push('/reports')}
               style={{
                 padding: '8px 16px',
                 background: '#6a1b9a',
@@ -338,8 +338,36 @@ export default function HomePage() {
               View History
             </button>
           </div>
-        </div>
 
+          <div style={{
+            padding: '15px',
+            background: '#e8f5e9',
+            borderRadius: '8px',
+            textAlign: 'center',
+          }}>
+            <p style={{ fontSize: '28px', marginBottom: '5px' }}>📖</p>
+            <h3 style={{ color: '#02084b', marginBottom: '5px', fontSize: '14px' }}>User Manual</h3>
+            <p style={{ color: '#666', fontSize: '11px', marginBottom: '10px' }}>
+              Rules & guide
+            </p>
+            <button
+              onClick={() => router.push('/manual')}
+              style={{
+                padding: '8px 16px',
+                background: '#2e7d32',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                width: '100%',
+              }}
+            >
+              View Manual
+            </button>
+          </div>
+        </div>
+        
         {/* Footer */}
         <div style={{
           textAlign: 'center',

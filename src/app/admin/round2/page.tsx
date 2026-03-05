@@ -138,15 +138,23 @@ const loadSelections = async (currentAuctionId?: number, manager?: Manager) => {
   
   if (!auctionIdToUse || !userToUse) return;
 
-  // Get all managers
-  const { data: managers } = await supabase
-    .from('managers')
-    .select('*')
-    .gt('starting_budget', 0)
-    .order('manager_name');
+  // ✅ Get managers who are participants in this auction
+const { data: participants } = await supabase
+  .from('auction_participants')
+  .select(`
+    participant_id,
+    manager_id,
+    managers (
+      manager_id,
+      manager_name,
+      email
+    )
+  `)
+  .eq('auction_id', auctionIdToUse)
+  
+  .order('managers(manager_name)');
 
-  if (!managers) return;
-
+if (!participants) return;
   // Get all selections
   const { data: allSelections } = await supabase
     .from('round2_selections')
@@ -171,8 +179,9 @@ const loadSelections = async (currentAuctionId?: number, manager?: Manager) => {
     const playerMap = new Map(players?.map(p => [p.player_id, p]) || []);
 
     // Build selections data
-    const selectionsData: Selection[] = managers.map(mgr => {
-      const playerIds = selectionMap.get(mgr.manager_id) || [];
+    const selectionsData: Selection[] = participants.map(p => {
+    const mgr = Array.isArray(p.managers) ? p.managers[0] : p.managers;
+    const playerIds = selectionMap.get(mgr.manager_id) || [];
       const playerDetails = playerIds
         .map(id => playerMap.get(id))
         .filter(p => p !== undefined) as Player[];
