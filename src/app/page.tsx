@@ -22,8 +22,6 @@ export default function LandingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // TODO: Send email to bushpalaneelima@gmail.com
     console.log('Form submitted:', formData);
     setFormSubmitted(true);
     
@@ -46,8 +44,8 @@ export default function LandingPage() {
 
   const faqs = [
     {
-      question: "What is AuctionLab?",
-      answer: "AuctionLab is a professional resource allocation simulation platform where participants strategically manage limited budgets to build optimal teams. Perfect for business education, corporate team building, and competitive entertainment."
+      question: "What is Game of Gambits?",
+      answer: "Game of Gambits is a strategic decision simulation where participants manage limited budgets to build optimal teams through competitive auction. Perfect for business education, corporate team building, and competitive entertainment."
     },
     {
       question: "Who is this for?",
@@ -55,7 +53,7 @@ export default function LandingPage() {
     },
     {
       question: "How does it work?",
-      answer: "Simple 4-step process:\n1. Create Simulation - Admin sets up the session\n2. Select Participants - Choose your group (up to 12 managers per auction)\n3. Allocate Resources - Strategically invest your points to build your team\n4. Track Performance - Monitor results based on real match outcomes (with Score Management package)\n\nThis is a points-based simulation for learning and entertainment, not real money."
+      answer: "Simple 4-step process:\n1. Create Simulation - Admin sets up the session\n2. Select Participants - Choose your group (up to 12 teams per auction)\n3. Allocate Resources - Strategically invest your points to build your team\n4. Track Performance - Monitor results based on real match outcomes (with Score Management package)\n\nThis is a points-based simulation for learning and entertainment, not real money."
     },
     {
       question: "What makes this different from fantasy sports?",
@@ -123,11 +121,11 @@ export default function LandingPage() {
     },
     {
       question: "How can I learn more about the platform?",
-      answer: "Contact us for information:\n• Email: hello@nbbluestudios.com\n• Website: www.nbbluestudios.com\n• Consultation: Discuss your requirements and how AuctionLab fits your needs\n\nWe're happy to answer questions about features, pricing, and customization options. Reach out to explore how the platform can work for your event or organization."
+      answer: "Contact us for information:\n• Email: hello@nbbluestudios.com\n• Website: www.nbbluestudios.com\n• Consultation: Discuss your requirements and how Game of Gambits fits your needs\n\nWe're happy to answer questions about features, pricing, and customization options. Reach out to explore how the platform can work for your event or organization."
     },
     {
       question: "Do I need internet connection?",
-      answer: "Yes, AuctionLab is a cloud-based platform that requires internet connectivity:\n• Stable WiFi or mobile data for all participants\n• Minimum speed: Basic broadband (2-3 Mbps per device)\n• Works on: Any device with a web browser and internet access\n• No downloads: Everything runs online in real-time\n\nFor in-person events, ensure the venue has reliable WiFi. For remote events, participants connect from their own internet."
+      answer: "Yes, Game of Gambits is a cloud-based platform that requires internet connectivity:\n• Stable WiFi or mobile data for all participants\n• Minimum speed: Basic broadband (2-3 Mbps per device)\n• Works on: Any device with a web browser and internet access\n• No downloads: Everything runs online in real-time\n\nFor in-person events, ensure the venue has reliable WiFi. For remote events, participants connect from their own internet."
     }
   ];
 
@@ -147,7 +145,7 @@ export default function LandingPage() {
         padding: '20px',
         position: 'relative',
       }}>
-        {/* Host Login Button - Top Right */}
+        {/* Host Login Button */}
         <button
           onClick={() => router.push('/login')}
           style={{
@@ -174,13 +172,13 @@ export default function LandingPage() {
         }}>
           {/* Title */}
           <h1 style={{
-            fontSize: '48px',
+            fontSize: '52px',
             marginBottom: '15px',
             fontWeight: 'bold',
             color: '#ffffff',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)',
           }}>
-            🎯 AuctionLab
+            ♟️ Game of Gambits
           </h1>
           
           <p style={{
@@ -189,18 +187,29 @@ export default function LandingPage() {
             color: 'rgba(255,255,255,0.95)',
             fontWeight: '500',
           }}>
-            Strategic Auction Simulation Platform
+            A Strategic Decision Simulation
           </p>
 
           <p style={{
             fontSize: '13px',
-            marginBottom: '50px',
+            marginBottom: '30px',
             color: 'rgba(255,255,255,0.6)',
           }}>
             by NB Blue Studios
           </p>
 
-          {/* Two Use Cases - Improved Contrast */}
+          <p style={{
+            fontSize: '16px',
+            marginBottom: '50px',
+            color: 'rgba(255,255,255,0.9)',
+            lineHeight: '1.6',
+            maxWidth: '800px',
+            margin: '0 auto 50px',
+          }}>
+            Experience competitive decision-making through live auction strategy designed for MBA students, corporate teams, and strategic thinkers.
+          </p>
+
+          {/* Two Use Cases */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
@@ -274,7 +283,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* CTA Buttons - Improved Text */}
+          {/* CTA Buttons */}
           <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginBottom: '40px' }}>
             <button
               onClick={() => router.push('/login')}
@@ -290,7 +299,7 @@ export default function LandingPage() {
                 boxShadow: '0 4px 12px rgba(40, 167, 69, 0.3)',
               }}
             >
-              Start Your Auction →
+              Start Your Simulation →
             </button>
             <button
               onClick={scrollToContact}
@@ -364,7 +373,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Key Features - Narrower Cards */}
+      {/* Key Features */}
       <div style={{
         padding: '80px 20px',
       }}>
@@ -412,7 +421,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Pricing Preview - Added Context */}
+      {/* Pricing Preview */}
       <div style={{
         background: 'rgba(255,255,255,0.05)',
         padding: '80px 20px',
@@ -555,7 +564,7 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Contact Form - Improved Field Visibility */}
+      {/* Contact Form */}
       <div id="contact" style={{
         background: 'rgba(255,255,255,0.05)',
         padding: '80px 20px',
@@ -575,7 +584,7 @@ export default function LandingPage() {
             color: 'rgba(255,255,255,0.8)',
             marginBottom: '40px',
           }}>
-            Interested in AuctionLab for your organization or event?
+            Interested in Game of Gambits for your organization or event?
           </p>
 
           {formSubmitted ? (
