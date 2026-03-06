@@ -13,22 +13,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AuctionLab - Professional Auction Engine",
+  title: "Game of Gambits - Professional Auction Engine",
   description: "Professional auction platform for entertainment and education by NB Blue Studios",
   icons: {
     icon: '/favicon.ico',
   },
   openGraph: {
-    title: "AuctionLab - Professional Auction Engine",
+    title: "Game of Gambits - Professional Auction Engine",
     description: "Professional auction platform for entertainment and education",
     url: "https://auction.nbbluestudios.com",
-    siteName: "AuctionLab",
+    siteName: "Game of Gambits",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "AuctionLab by NB Blue Studios",
+        alt: "Game of Gambits by NB Blue Studios",
       },
     ],
     locale: "en_IN",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "AuctionLab - Professional Auction Engine",
+    title: "Game of Gambits - Professional Auction Engine",
     description: "Professional auction platform for entertainment and education",
     images: ["/og-image.png"],
   },
