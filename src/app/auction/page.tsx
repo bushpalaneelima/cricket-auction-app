@@ -268,6 +268,9 @@ function AuctionPageContent() {
       isTickingRef.current = true;
 
       try {
+        // FIX 3: Don't tick if sale is being processed — prevents 1-2 extra decrements during SKIP
+        if (isProcessingSaleRef.current) return;
+
         const { data: currentAuction, error } = await supabase
           .from('auctions')
           .select('timer_seconds, is_paused')
@@ -548,6 +551,7 @@ function AuctionPageContent() {
             current_bid_participant_id: null,
             timer_seconds: 30,
             freeze_message: null,
+            is_paused: false, // FIX 2: Unpause for new player after SKIP/sold flow
           })
           .eq('auction_id', auction.auction_id);
 
@@ -788,6 +792,13 @@ function AuctionPageContent() {
     if (!auctionState) return;
 
     isProcessingSaleRef.current = true;
+
+    // FIX 1: Pause timer immediately so it stops for everyone the instant SKIP is clicked
+    // Without this, the DB timer ticks 1-2 more times during the sale pipeline
+    await supabase
+      .from('auctions')
+      .update({ is_paused: true })
+      .eq('auction_id', auctionState.auction_id);
 
     try {
       const { data: latestAuction, error: auctionErr } = await supabase
@@ -1121,20 +1132,20 @@ function AuctionPageContent() {
 
             {/* Round 2 badge */}
             {auctionState.status === 'round2' && (
-              <div style={{ background: '#ff9800', color: 'white', padding: '10px', borderRadius: '8px', textAlign: 'center', marginBottom: '15px', fontWeight: 'bold' }}>
+              <div style={{ background: '#ff9800', color: 'white', padding: '7px', borderRadius: '8px', textAlign: 'center', marginBottom: '8px', fontWeight: 'bold' }}>
                 🔥 ROUND 2 AUCTION
               </div>
             )}
 
             {/* Admin viewing badge */}
             {access?.isAdmin && !access?.isParticipant && (
-              <div style={{ background: '#ff9800', color: 'white', padding: '10px', borderRadius: '8px', textAlign: 'center', marginBottom: '15px', fontWeight: 'bold' }}>
+              <div style={{ background: '#ff9800', color: 'white', padding: '7px', borderRadius: '8px', textAlign: 'center', marginBottom: '8px', fontWeight: 'bold' }}>
                 👑 Viewing as Admin
               </div>
             )}
 
             {/* Progress bar */}
-            <div style={{ background: 'linear-gradient(135deg, #02084b 0%, #3E5B99 100%)', color: 'white', padding: '12px', borderRadius: '8px', marginBottom: '15px' }}>
+            <div style={{ background: 'linear-gradient(135deg, #02084b 0%, #3E5B99 100%)', color: 'white', padding: '8px 12px', borderRadius: '8px', marginBottom: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{playersSold} / {totalPlayers}</span>
                 <span style={{ fontSize: '14px' }}>{totalPlayers - playersSold} remaining</span>
@@ -1146,12 +1157,12 @@ function AuctionPageContent() {
               <div style={{ fontSize: '64px', fontWeight: 'bold', color: getTimerColor(displayTimer), lineHeight: 1 }}>
                 {displayTimer}
               </div>
-              <p style={{ color: '#666', fontSize: '12px', margin: '4px 0 0' }}>seconds remaining</p>
+              <p style={{ color: '#666', fontSize: '11px', margin: '2px 0 0' }}>seconds</p>
             </div>
 
             {/* Player card */}
-            <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '8px', marginBottom: '15px' }}>
-              <h2 style={{ fontSize: '24px', color: '#02084b', marginBottom: '12px', textAlign: 'center', margin: '0 0 12px' }}>
+            <div style={{ background: '#f8f9fa', padding: '10px', borderRadius: '8px', marginBottom: '8px' }}>
+              <h2 style={{ fontSize: '20px', color: '#02084b', marginBottom: '8px', textAlign: 'center', margin: '0 0 8px' }}>
                 {currentPlayer.player_name}
               </h2>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
@@ -1173,7 +1184,7 @@ function AuctionPageContent() {
 
             {/* Freeze message (SOLD / bid notification) */}
             {auctionState.freeze_message && (
-              <div style={{ background: '#4caf50', color: 'white', padding: '20px', borderRadius: '8px', marginBottom: '15px', textAlign: 'center', fontSize: '18px', fontWeight: 'bold' }}>
+              <div style={{ background: '#4caf50', color: 'white', padding: '10px', borderRadius: '8px', marginBottom: '8px', textAlign: 'center', fontSize: '15px', fontWeight: 'bold' }}>
                 {auctionState.freeze_message}
               </div>
             )}
@@ -1181,15 +1192,15 @@ function AuctionPageContent() {
             {/* Current bid display */}
             <div style={{
               background: currentBidder ? '#e3f2fd' : '#fff3cd',
-              padding: '15px',
+              padding: '10px',
               borderRadius: '8px',
-              marginBottom: '15px',
+              marginBottom: '8px',
               textAlign: 'center',
             }}>
               {currentBidder && auctionState.current_bid_amount > 0 ? (
                 <>
                   <p style={{ color: '#666', fontSize: '12px', marginBottom: '4px' }}>Current Highest Bid</p>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#02084b', margin: 0 }}>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#02084b', margin: 0 }}>
                     {auctionState.current_bid_amount} points
                   </p>
                   <p style={{ color: '#666', margin: '4px 0 0' }}>
@@ -1266,10 +1277,10 @@ function AuctionPageContent() {
 
             {/* ── Admin controls ── */}
             {access?.canControl && (
-              <div style={{ marginTop: '15px' }}>
+              <div style={{ marginTop: '8px' }}>
 
                 {/* Row 1: Pause | Skip | End Round 1 */}
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '12px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginBottom: '8px', flexWrap: 'wrap' }}>
                   <button
                     onClick={handlePause}
                     style={{
