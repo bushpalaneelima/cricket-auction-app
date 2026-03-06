@@ -85,10 +85,10 @@ export default function UserManualPage() {
           background: '#f8f9fa',
         }}>
           {[
-            { id: 'platform', label: '🖥️ Platform Guide', icon: '🖥️' },
-            { id: 'rules', label: '📜 Rules & Regulations', icon: '📜' },
-            { id: 'scoring', label: '📊 Scoring System', icon: '📊' },
-            { id: 'analysis', label: '📈 Analysis Guide', icon: '📈' },
+            { id: 'platform', label: '🖥️ Platform Guide' },
+            { id: 'rules', label: '📜 Rules & Regulations' },
+            { id: 'scoring', label: '📊 Scoring System' },
+            { id: 'analysis', label: '📈 Analysis Guide' },
           ].map(tab => (
             <button
               key={tab.id}
@@ -217,6 +217,10 @@ function PlatformGuide() {
           <li><strong>Team Requirements:</strong> Visual indicators for batsmen, bowlers, all-rounders, wicket keepers</li>
           <li><strong>Squad List:</strong> All players you've purchased with prices</li>
         </ul>
+        
+        <p style={{ paddingLeft: '20px', marginTop: '15px', lineHeight: '1.8' }}>
+          <strong>Multiple Auctions:</strong> If you have participated in multiple auctions, use the dropdown at the top to switch between auctions and view each team separately.
+        </p>
       </section>
 
       {/* How to Bid */}
@@ -263,8 +267,7 @@ function PlatformGuide() {
           <ul style={{ paddingLeft: '20px' }}>
             <li>If no bids placed, player marked UNSOLD</li>
             <li>Message: "⏭️ UNSOLD - Moving to next player..."</li>
-            <li>Platinum/Gold unsold → Downgraded one class and re-auctioned</li>
-            <li>Silver unsold → Added to Round 2 pool</li>
+            <li>All unsold players go directly to Round 2 pool</li>
           </ul>
         </div>
       </section>
@@ -311,13 +314,41 @@ function PlatformGuide() {
         </div>
       </section>
 
+      {/* Reports & Analysis - NEW SECTION */}
+      <section style={{ marginBottom: '30px' }}>
+        <h3 style={{ color: '#02084b', fontSize: '20px', marginBottom: '15px' }}>
+          📊 Reports & Analysis
+        </h3>
+        
+        <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px', marginTop: '15px' }}>
+          Player Pool Tab
+        </h4>
+        <ul style={{ paddingLeft: '40px', lineHeight: '1.8' }}>
+          <li>View all players in the tournament before and during auction</li>
+          <li>Filter by Role, Class, or Country to plan your strategy</li>
+          <li>Each player shows <strong>Available</strong> (base price) or <strong>Sold</strong> (sold price)</li>
+          <li>Use the Sold/Unsold toggle during breaks to quickly see what's left in the pool</li>
+        </ul>
+
+        <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px', marginTop: '15px' }}>
+          Leaderboard Tab
+        </h4>
+        <ul style={{ paddingLeft: '40px', lineHeight: '1.8' }}>
+          <li>Compare all teams side by side after auction</li>
+          <li>See total spent, players bought, budget remaining, average price</li>
+          <li>Admin can switch between all auctions</li>
+          <li>Participants see only auctions they were part of</li>
+          <li>Download Summary or Player Details as CSV</li>
+        </ul>
+      </section>
+
       {/* Tips */}
       <section>
         <h3 style={{ color: '#02084b', fontSize: '20px', marginBottom: '15px' }}>
           💡 Pro Tips
         </h3>
         <ul style={{ paddingLeft: '40px', lineHeight: '1.8' }}>
-          <li>Click the bid button quickly - competition is fast!</li>
+          <li>Click the bid button quickly - fastest finger first!</li>
           <li>Always watch your remaining budget in the right panel</li>
           <li>Monitor team requirements - system prevents illegal teams</li>
           <li>Plan your strategy before auction starts</li>
@@ -343,8 +374,8 @@ function RulesRegulations() {
           🎯 Basic Setup
         </h3>
         <div style={{ paddingLeft: '20px', lineHeight: '1.8' }}>
-          <p><strong>Total Participants:</strong> 12 managers per tournament</p>
-          <p><strong>Player Pool:</strong> 120 total players available</p>
+          <p><strong>Total Participants:</strong> Up to 12 managers per auction</p>
+          <p><strong>Player Pool:</strong> 250 total players available</p>
           <p><strong>Starting Budget:</strong> 1000 points per manager</p>
           <p><strong>Team Size:</strong> Minimum 11 players, Maximum 15 players</p>
           <p><strong>Auction Schedule:</strong> Scheduled by admin</p>
@@ -385,8 +416,14 @@ function RulesRegulations() {
         </h3>
         <div style={{ paddingLeft: '20px', lineHeight: '1.8' }}>
           <p><strong>Team Size:</strong> Between 11 and 15 players</p>
-          <p><strong>Bowling Options:</strong> Minimum 5 players who can bowl (Bowlers or All-rounders)</p>
-          <p><strong>Wicket Keeper:</strong> At least 1 wicket keeper required</p>
+          <p><strong>Minimum Roles Required (for 11-player squad):</strong></p>
+          <ul style={{ paddingLeft: '20px', marginTop: '10px' }}>
+            <li><strong>3 Batsmen</strong></li>
+            <li><strong>3 Bowlers</strong></li>
+            <li><strong>2 All-rounders</strong></li>
+            <li><strong>1 Wicket Keeper</strong></li>
+          </ul>
+          <p style={{ marginTop: '10px' }}><strong>Bowling Options Total:</strong> Minimum 5 players who can bowl (3 Bowlers + 2 All-rounders)</p>
           
           <div style={{ 
             marginTop: '15px', 
@@ -416,10 +453,8 @@ function RulesRegulations() {
         </ul>
 
         <div style={{ paddingLeft: '20px', lineHeight: '1.8', marginTop: '15px' }}>
-          <p><strong>Jump Bidding:</strong> Allowed! You can bid higher than minimum increment (e.g., bid 50 when current is 20)</p>
-          <p><strong>Initial Bidding Process:</strong> First 2 managers start bidding against each other. When one drops, the 3rd manager can join the bidding war</p>
+          <p><strong>Bidding Process:</strong> Managers start bidding against each other. Fastest finger first gets the bid!</p>
           <p><strong>Timer Mechanism:</strong> 30 seconds per player. Highest bid when timer reaches 0 wins the player</p>
-          <p><strong>Unsold Players:</strong> Platinum and Gold class unsold players are downgraded one class and re-auctioned at the lower base price</p>
         </div>
       </section>
 
@@ -429,7 +464,6 @@ function RulesRegulations() {
           📋 Auction Order
         </h3>
         <div style={{ paddingLeft: '20px', lineHeight: '1.8' }}>
-          <p><strong>First Phase:</strong> Captains of all 10 teams are auctioned first</p>
           <p><strong>Class Order:</strong> Platinum → Gold → Silver</p>
           <p><strong>Within Each Class:</strong> Batsmen → Bowlers → All-rounders → Wicket Keepers</p>
           <p style={{ marginTop: '10px', fontStyle: 'italic', color: '#666' }}>
@@ -444,11 +478,9 @@ function RulesRegulations() {
           ⏭️ Unsold Player Mechanism
         </h3>
         <div style={{ paddingLeft: '20px', lineHeight: '1.8' }}>
-          <p><strong>Platinum Unsold:</strong> Downgraded to Gold class, re-auctioned at Gold base price (6 points)</p>
-          <p><strong>Gold Unsold:</strong> Downgraded to Silver class, re-auctioned at Silver base price (4 points)</p>
-          <p><strong>Silver Unsold:</strong> Goes into Round 2 selection pool</p>
+          <p><strong>All Unsold Players:</strong> Go directly into Round 2 selection pool</p>
           <p style={{ marginTop: '10px', fontStyle: 'italic', color: '#666' }}>
-            Note: Role (Batsman, Bowler, etc.) does not change, only the class changes
+            Note: Role (Batsman, Bowler, etc.) and class remain unchanged
           </p>
         </div>
       </section>
@@ -468,17 +500,13 @@ function RulesRegulations() {
         </div>
       </section>
 
-      {/* Prizes */}
+      {/* Competition */}
       <section>
         <h3 style={{ color: '#02084b', fontSize: '20px', marginBottom: '15px' }}>
-          🏆 Prizes & Competition
+          🏆 Competition
         </h3>
         <div style={{ paddingLeft: '20px', lineHeight: '1.8' }}>
-          <p><strong>1st Place:</strong> Cash prize (amount announced by organizer)</p>
-          <p><strong>2nd Place:</strong> Cash prize</p>
-          <p><strong>3rd Place:</strong> Cash prize</p>
-          <p><strong>Consolation Prizes:</strong> For other participants</p>
-          <p style={{ marginTop: '15px', fontStyle: 'italic', color: '#666' }}>
+          <p style={{ fontStyle: 'italic', color: '#666' }}>
             Final rankings are determined by total points scored by your team based on actual player performance in matches
           </p>
         </div>
@@ -495,7 +523,7 @@ function ScoringSystem() {
       </h2>
 
       <p style={{ marginBottom: '30px', lineHeight: '1.8', color: '#666' }}>
-        Points are calculated based on actual player performance in real matches. All bonuses use exponential formulas to reward exceptional performances.
+        Points are calculated based on actual player performance in real matches.
       </p>
 
       {/* Batting */}
@@ -514,42 +542,27 @@ function ScoringSystem() {
         </ul>
 
         <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px', marginTop: '20px' }}>
-          Consecutive Boundaries Bonus (Exponential):
+          Milestone Bonus:
         </h4>
         <ul style={{ paddingLeft: '40px', lineHeight: '1.8' }}>
-          <li>3 consecutive boundaries: 10 bonus points</li>
-          <li>4 consecutive boundaries: 20 bonus points</li>
-          <li>5 consecutive boundaries: 40 bonus points</li>
-          <li>6 consecutive boundaries: 80 bonus points</li>
-        </ul>
-        <p style={{ paddingLeft: '40px', fontStyle: 'italic', color: '#666' }}>
-          Formula: 10 × 2^(n-3) where n = number of consecutive boundaries
-        </p>
-
-        <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px', marginTop: '20px' }}>
-          Milestone Bonus (Exponential):
-        </h4>
-        <ul style={{ paddingLeft: '40px', lineHeight: '1.8' }}>
-          <li>25 runs: 5 bonus points</li>
-          <li>50 runs: 10 bonus points</li>
-          <li>75 runs: 20 bonus points</li>
+          <li>25 runs: 10 bonus points</li>
+          <li>50 runs: 20 bonus points</li>
+          <li>75 runs: 30 bonus points</li>
           <li>100 runs: 40 bonus points</li>
-          <li>125 runs: 80 bonus points</li>
-          <li>150 runs: 160 bonus points</li>
+          <li>125 runs: 50 bonus points</li>
+          <li>150 runs: 60 bonus points</li>
+          <li style={{ fontStyle: 'italic', color: '#666' }}>... and so on (continues with +10 points per 25 runs)</li>
         </ul>
-        <p style={{ paddingLeft: '40px', fontStyle: 'italic', color: '#666' }}>
-          Formula: 5 × 2^(n-1) where n = milestone number (1st, 2nd, 3rd...)
-        </p>
 
         <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px', marginTop: '20px' }}>
-          Strike Rate Points (Not applicable for bowlers, no minimum balls):
+          Strike Rate Points (Not applicable for bowlers, minimum 6 balls faced):
         </h4>
         <ul style={{ paddingLeft: '40px', lineHeight: '1.8' }}>
-          <li>SR &lt; 60: -40 points</li>
-          <li>SR 60-89: -20 points</li>
+          <li>SR &lt; 60: -20 points</li>
+          <li>SR 60-89: -10 points</li>
           <li>SR 90-119: 0 points</li>
-          <li>SR 120-149: +20 points</li>
-          <li>SR ≥ 150: +40 points</li>
+          <li>SR 120-149: +10 points</li>
+          <li>SR ≥ 150: +20 points</li>
         </ul>
       </section>
 
@@ -568,18 +581,15 @@ function ScoringSystem() {
         </ul>
 
         <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px', marginTop: '20px' }}>
-          Multiple Wickets Bonus (Exponential):
+          Multiple Wickets Bonus:
         </h4>
         <ul style={{ paddingLeft: '40px', lineHeight: '1.8' }}>
-          <li>2 wickets: 20 bonus points</li>
-          <li>3 wickets: 40 bonus points</li>
-          <li>4 wickets: 80 bonus points</li>
-          <li>5 wickets: 160 bonus points</li>
-          <li>6+ wickets: 320 bonus points</li>
+          <li>2 wickets: 10 bonus points</li>
+          <li>3 wickets: 20 bonus points</li>
+          <li>4 wickets: 30 bonus points</li>
+          <li>5 wickets: 40 bonus points</li>
+          <li>6+ wickets: 50 bonus points</li>
         </ul>
-        <p style={{ paddingLeft: '40px', fontStyle: 'italic', color: '#666' }}>
-          Formula: 20 × 2^(n-2) where n = wickets after the first one
-        </p>
 
         <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px', marginTop: '20px' }}>
           Special Bowling Achievements:
@@ -589,16 +599,16 @@ function ScoringSystem() {
         </ul>
 
         <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px', marginTop: '20px' }}>
-          Economy Rate Points (Not applicable for batsmen, no minimum overs):
+          Economy Rate Points (Not applicable for batsmen, minimum 2 overs):
         </h4>
         <ul style={{ paddingLeft: '40px', lineHeight: '1.8' }}>
-          <li>ER ≤ 3.0: +80 points</li>
-          <li>ER 3.1-4.5: +40 points</li>
-          <li>ER 4.6-5.5: +20 points</li>
+          <li>ER ≤ 3.0: +30 points</li>
+          <li>ER 3.1-4.5: +20 points</li>
+          <li>ER 4.6-5.5: +10 points</li>
           <li>ER 5.6-6.5: 0 points</li>
-          <li>ER 6.6-7.5: -20 points</li>
-          <li>ER 7.6-9.0: -40 points</li>
-          <li>ER &gt; 9.0: -80 points</li>
+          <li>ER 6.6-7.5: -10 points</li>
+          <li>ER 7.6-9.0: -20 points</li>
+          <li>ER &gt; 9.0: -30 points</li>
         </ul>
       </section>
 
@@ -612,14 +622,14 @@ function ScoringSystem() {
           Basic Fielding:
         </h4>
         <ul style={{ paddingLeft: '40px', lineHeight: '1.8' }}>
-          <li><strong>Each catch:</strong> 25 points</li>
-          <li><strong>Each stumping:</strong> 25 points</li>
-          <li><strong>Each run out:</strong> 25 points (awarded to both thrower and fielder who removes bails)</li>
-          <li><strong>Direct hit run out:</strong> 25 points (single player gets full credit)</li>
+          <li><strong>Each catch:</strong> 20 points</li>
+          <li><strong>Each stumping:</strong> 20 points</li>
+          <li><strong>Each run out:</strong> 20 points (awarded to both thrower and fielder who removes bails)</li>
+          <li><strong>Direct hit run out:</strong> 20 points (single player gets full credit)</li>
         </ul>
 
         <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px', marginTop: '20px' }}>
-          Multiple Dismissals Bonus (Exponential):
+          Multiple Dismissals Bonus:
         </h4>
         <p style={{ paddingLeft: '40px', marginBottom: '10px' }}>
           Total dismissals in a match (catches + stumpings + run outs):
@@ -627,12 +637,9 @@ function ScoringSystem() {
         <ul style={{ paddingLeft: '40px', lineHeight: '1.8' }}>
           <li>2 dismissals: 10 bonus points</li>
           <li>3 dismissals: 20 bonus points</li>
-          <li>4 dismissals: 40 bonus points</li>
-          <li>5 dismissals: 80 bonus points</li>
+          <li>4 dismissals: 30 bonus points</li>
+          <li>5 dismissals: 40 bonus points</li>
         </ul>
-        <p style={{ paddingLeft: '40px', fontStyle: 'italic', color: '#666' }}>
-          Formula: 10 × 2^(X-2) where X = total dismissals in the match
-        </p>
       </section>
 
       {/* Special Awards */}
@@ -654,7 +661,7 @@ function ScoringSystem() {
         borderRadius: '4px' 
       }}>
         <p style={{ margin: 0, lineHeight: '1.8' }}>
-          <strong>Key Principle:</strong> The scoring system rewards consistent performance with base points and exceptional performances with exponential bonuses. This creates strategic depth as managers must balance reliable performers with high-risk, high-reward players.
+          <strong>Key Principle:</strong> The scoring system rewards consistent performance with base points and provides linear bonuses for exceptional performances. This creates strategic depth as managers must balance reliable performers with high-reward players.
         </p>
       </div>
     </div>
@@ -703,7 +710,7 @@ function AnalysisGuide() {
         </h4>
         <ul style={{ paddingLeft: '40px', lineHeight: '1.8' }}>
           <li><strong>Batting Depth:</strong> Target 6-7 specialist batsmen for consistency</li>
-          <li><strong>Bowling Strength:</strong> Ensure 5+ bowling options including 2-3 specialists</li>
+          <li><strong>Bowling Strength:</strong> Ensure 5+ bowling options including 3 specialist bowlers</li>
           <li><strong>All-rounder Premium:</strong> All-rounders provide flexibility - worth 15-20% premium over base price</li>
           <li><strong>Wicket Keeper Strategy:</strong> Quality WK is non-negotiable - budget accordingly</li>
         </ul>
@@ -717,14 +724,14 @@ function AnalysisGuide() {
         
         <div style={{ paddingLeft: '20px', lineHeight: '1.8' }}>
           <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px' }}>
-            High-Value Players (80+ points):
+            High-Value Players (150+ points):
           </h4>
           <p><strong>Pros:</strong> Consistent point scorers, proven performance, team captain material</p>
           <p><strong>Cons:</strong> Expensive, limits budget flexibility, injury risk = large loss</p>
           <p><strong>Strategy:</strong> Acquire 1-2 maximum, ensure remaining budget can complete team</p>
 
           <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px', marginTop: '20px' }}>
-            Mid-Tier Players (20-50 points):
+            Mid-Tier Players (50-100 points):
           </h4>
           <p><strong>Pros:</strong> Best value for money, balanced risk/reward, flexibility to build around them</p>
           <p><strong>Cons:</strong> Less guaranteed performance, higher variance</p>
@@ -835,11 +842,6 @@ function AnalysisGuide() {
           </table>
 
           <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px', marginTop: '20px' }}>
-            Captain Selection:
-          </h4>
-          <p>While all players score equally, having a recognized captain (auctioned first) often provides psychological confidence boost and team identity.</p>
-
-          <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px', marginTop: '20px' }}>
             Bench Strength:
           </h4>
           <p>Target 13-14 players. Provides insurance against injuries/poor form while maintaining budget efficiency.</p>
@@ -876,7 +878,7 @@ function AnalysisGuide() {
         }}>
           <h4 style={{ color: '#856404', marginBottom: '10px' }}>2. Ignoring Team Requirements</h4>
           <p style={{ margin: 0, lineHeight: '1.8' }}>
-            <strong>Mistake:</strong> Buying 8 batsmen and only 2 bowlers<br/>
+            <strong>Mistake:</strong> Not maintaining minimum role requirements<br/>
             <strong>Consequence:</strong> System blocks team completion, scramble in Round 2<br/>
             <strong>Solution:</strong> Check right panel constantly, prioritize scarce roles early
           </p>
@@ -947,7 +949,7 @@ function AnalysisGuide() {
           Comparative Analysis vs. Competitors:
         </h4>
         <p style={{ paddingLeft: '20px', lineHeight: '1.8' }}>
-          Rank all 8 teams on: Total projected points, Budget efficiency, Batting strength, Bowling strength, All-rounder depth
+          Rank all teams on: Total projected points, Budget efficiency, Batting strength, Bowling strength, All-rounder depth
         </p>
 
         <h4 style={{ color: '#02084b', fontSize: '18px', marginBottom: '10px', marginTop: '20px' }}>
