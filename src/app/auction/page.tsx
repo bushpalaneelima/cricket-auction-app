@@ -74,6 +74,7 @@ function AuctionPageContent() {
   const [displayTimer, setDisplayTimer] = useState<number>(30);
   const [myTeam, setMyTeam] = useState<TeamPlayer[]>([]);
   const [round1Complete, setRound1Complete] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
@@ -678,14 +679,13 @@ function AuctionPageContent() {
     if (!currentParticipant || !currentPlayer || !auctionState) return;
 
     if (myTeam.length >= 15) {
-      alert('You have reached the maximum of 15 players!');
-      return;
-    }
-
+  showToast('🚫 You have reached the maximum of 15 players!');
+  return;
+  }
     const nextBidAmount = getNextBidAmount();
 
     if (currentParticipant.current_budget < nextBidAmount) {
-      alert('Insufficient budget!');
+      showToast('⚠️ Insufficient budget!');
       return;
     }
 
@@ -701,12 +701,8 @@ function AuctionPageContent() {
       const totalMinimumCost = playersToCalculate * costPerPlayer;
 
       if (budgetAfterBid < totalMinimumCost) {
-        alert(
-          `⚠️ CANNOT BID!\n\n` +
-          `After this ${nextBidAmount} pts bid, you'll have ${budgetAfterBid} pts left.\n\n` +
-          `You still need ${playersStillNeeded} more players (minimum ${totalMinimumCost} pts).`
-        );
-        return;
+        showToast(`⚠️ Need ${totalMinimumCost} pts minimum for remaining players!`);
+      return;
       }
     }
 
@@ -716,15 +712,14 @@ function AuctionPageContent() {
       .eq('auction_id', auctionState.auction_id)
       .single();
 
-    if (currentAuction?.is_bid_locked) {
-      alert('⏱️ Another bid in progress!');
+      if (currentAuction?.is_bid_locked) {
+      showToast('⏱️ Another bid in progress!');
       return;
-    }
-
+      }
     if (currentAuction?.bid_freeze_until) {
       const freezeEnd = new Date(currentAuction.bid_freeze_until).getTime();
       if (Date.now() < freezeEnd) {
-        alert('⏱️ Bidding frozen!');
+        showToast('⏱️ Bidding frozen!');
         return;
       }
     }
@@ -737,7 +732,7 @@ function AuctionPageContent() {
       .select();
 
     if (lockError || !lockResult || lockResult.length === 0) {
-      alert('⏱️ Another manager bid first!');
+       showToast('⚡ Another manager bid first!');
       return;
     }
 
@@ -992,7 +987,7 @@ function AuctionPageContent() {
   const handleApplyFilters = async () => {
     if (!auctionState || !access?.canControl) return;
     if (!selectedClass || !selectedRole) {
-      alert('Please select both Class and Role');
+      showToast('⚠️ Please select both Class and Role');
       return;
     }
 
@@ -1003,6 +998,10 @@ function AuctionPageContent() {
 
     const updatedAuction = { ...auctionState, class_filter: selectedClass, role_filter: selectedRole };
     await loadNextPlayer(updatedAuction);
+  };
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
   const getTimerColor = (t: number) => {
@@ -1487,6 +1486,19 @@ function AuctionPageContent() {
         )}
 
       </div>
+
+            {toastMessage && (
+        <div style={{
+          position: 'fixed', bottom: '30px', left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#333', color: 'white',
+          padding: '12px 24px', borderRadius: '8px',
+          fontSize: '14px', fontWeight: '600',
+          zIndex: 9999, boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        }}>
+          {toastMessage}
+        </div>
+      )}
 
       {/* FIX: Single "Powered by" footer — centered at bottom of page, not floating in the layout */}
       <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.35)', fontSize: '11px', padding: '10px 0 14px', margin: 0 }}>
