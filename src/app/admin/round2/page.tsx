@@ -269,7 +269,7 @@ export default function AdminRound2Page() {
         .eq('auction_id', auctionId);
 
       alert('✅ Round 2 auction started!\n\nRedirecting to auction page...');
-      router.push('/auction');
+      router.push(`/auction?id=${auctionId}`);
     } catch (error) {
       console.error('Error starting Round 2:', error);
       alert('Error starting Round 2. Please try again.');
