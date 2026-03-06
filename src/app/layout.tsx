@@ -13,14 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Game of Gambits - Professional Auction Engine",
-  description: "Professional auction platform for entertainment and education by NB Blue Studios",
+  title: "Game of Gambits – Strategic Auction Simulation",
+  description: "A live competitive decision simulation for MBA programs, corporate training and strategic thinkers.",
   icons: {
     icon: '/favicon.ico',
   },
   openGraph: {
-    title: "Game of Gambits - Professional Auction Engine",
-    description: "Professional auction platform for entertainment and education",
+    title: "Game of Gambits – Strategic Auction Simulation",
+    description: "A live competitive decision simulation for MBA programs, corporate training and strategic thinkers.",
     url: "https://auction.nbbluestudios.com",
     siteName: "Game of Gambits",
     images: [
@@ -36,8 +36,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Game of Gambits - Professional Auction Engine",
-    description: "Professional auction platform for entertainment and education",
+    title: "Game of Gambits – Strategic Auction Simulation",
+    description: "A live competitive decision simulation for MBA programs, corporate training and strategic thinkers.",
     images: ["/og-image.png"],
   },
 };
