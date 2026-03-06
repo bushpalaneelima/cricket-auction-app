@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 
@@ -36,24 +36,42 @@ export default function Round2SelectPage() {
   const [allSelections, setAllSelections] = useState<Selection[]>([]);
   const [auctionId, setAuctionId] = useState<number | null>(null);
   const [searchText, setSearchText] = useState('');
+  const [notParticipant, setNotParticipant] = useState(false);
+
+  // FIX: Use refs to avoid stale closures in subscription callbacks
+  const auctionIdRef = useRef<number | null>(null);
+  const currentUserRef = useRef<Manager | null>(null);
+
+  useEffect(() => {
+    auctionIdRef.current = auctionId;
+  }, [auctionId]);
+
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
 
   useEffect(() => {
     checkAuth();
   }, []);
 
-  // Real-time subscription to selections
+  // Real-time subscription — uses refs so callback is never stale
   useEffect(() => {
     if (!auctionId) return;
 
     const channel = supabase
-      .channel('round2-selections')
+      .channel(`round2-selections-${auctionId}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'round2_selections',
         filter: `auction_id=eq.${auctionId}`,
       }, () => {
-        loadSelections();
+        // FIX: Read from refs, not state — always current values
+        const aid = auctionIdRef.current;
+        const user = currentUserRef.current;
+        if (aid && user) {
+          loadSelections(aid, user);
+        }
       })
       .subscribe();
 
@@ -64,7 +82,7 @@ export default function Round2SelectPage() {
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (!session) {
       router.push('/login');
       return;
@@ -82,16 +100,18 @@ export default function Round2SelectPage() {
     }
 
     setCurrentUser(mgr);
-    await loadRound2Data(mgr.manager_id);
+    currentUserRef.current = mgr;
+    await loadRound2Data(mgr);
     setLoading(false);
   };
 
-  const loadRound2Data = async (managerId: number) => {
-    // Get current auction
+  const loadRound2Data = async (manager: Manager) => {
+    // FIX: Accept both 'completed' and 'round2' status — admin may have already
+    // started round2 by the time a manager loads this page
     const { data: auction } = await supabase
       .from('auctions')
       .select('*')
-      .eq('status', 'completed')
+      .in('status', ['completed', 'round2'])
       .eq('round2_selection_open', true)
       .order('scheduled_at', { ascending: false })
       .limit(1)
@@ -104,6 +124,23 @@ export default function Round2SelectPage() {
     }
 
     setAuctionId(auction.auction_id);
+    auctionIdRef.current = auction.auction_id;
+
+    // FIX: Check if this manager is a participant in the auction.
+    // The DB trigger will throw if they're not — better to check upfront
+    // and show a clear message rather than a generic "Error selecting player".
+    const { data: participation } = await supabase
+      .from('auction_participants')
+      .select('participant_id')
+      .eq('auction_id', auction.auction_id)
+      .eq('manager_id', manager.manager_id)
+      .single();
+
+    if (!participation) {
+      setNotParticipant(true);
+      setLoading(false);
+      return;
+    }
 
     // Load unsold players from Round 1
     const { data: unsold } = await supabase
@@ -117,34 +154,31 @@ export default function Round2SelectPage() {
       return;
     }
 
-const unsoldIds = unsold.map(u => u.player_id);
+    const unsoldIds = unsold.map(u => u.player_id);
 
-// Get player details
-const { data: allPlayers } = await supabase
-  .from('players')
-  .select('*')
-  .in('player_id', unsoldIds)
-  .order('player_name');
+    const { data: allPlayers } = await supabase
+      .from('players')
+      .select('*')
+      .in('player_id', unsoldIds)
+      .order('player_name');
 
-// Filter by tournament in JavaScript
-let filteredPlayers = allPlayers || [];
+    let filteredPlayers = allPlayers || [];
 
-if (auction.tournament_filter && allPlayers) {
-  filteredPlayers = allPlayers.filter(player => {
-    const filterColumn = auction.tournament_filter as keyof typeof player;
-    return player[filterColumn] === true;
-  });
-}
+    if (auction.tournament_filter && allPlayers) {
+      filteredPlayers = allPlayers.filter(player => {
+        const filterColumn = auction.tournament_filter as keyof typeof player;
+        return player[filterColumn] === true;
+      });
+    }
 
-setUnsoldPlayers(filteredPlayers);
-    // Load selections
-    await loadSelections();
+    setUnsoldPlayers(filteredPlayers);
+
+    // FIX: Pass auction_id and manager directly — don't rely on state being set yet
+    await loadSelections(auction.auction_id, manager);
   };
 
-  const loadSelections = async () => {
-    if (!auctionId || !currentUser) return;
-
-    // Get all selections with manager names
+  // FIX: Accept parameters instead of reading from state to avoid stale closures
+  const loadSelections = async (currentAuctionId: number, manager: Manager) => {
     const { data: selections } = await supabase
       .from('round2_selections')
       .select(`
@@ -153,7 +187,7 @@ setUnsoldPlayers(filteredPlayers);
         manager_id,
         managers (manager_name)
       `)
-      .eq('auction_id', auctionId);
+      .eq('auction_id', currentAuctionId);
 
     const selectionsWithNames = (selections || []).map(s => ({
       selection_id: s.selection_id,
@@ -164,9 +198,8 @@ setUnsoldPlayers(filteredPlayers);
 
     setAllSelections(selectionsWithNames);
 
-    // Get my selections
     const mySelectIds = selectionsWithNames
-      .filter(s => s.manager_id === currentUser.manager_id)
+      .filter(s => s.manager_id === manager.manager_id)
       .map(s => s.player_id);
 
     setMySelections(mySelectIds);
@@ -175,30 +208,31 @@ setUnsoldPlayers(filteredPlayers);
   const handleSelectPlayer = async (playerId: number) => {
     if (!currentUser || !auctionId) return;
 
-    // Check if already selected by someone else
     const existingSelection = allSelections.find(s => s.player_id === playerId);
     if (existingSelection && existingSelection.manager_id !== currentUser.manager_id) {
       alert(`Already selected by ${existingSelection.manager_name}! Choose a different player.`);
       return;
     }
 
-    // Check if manager already has 5 selections
     if (mySelections.length >= 5 && !mySelections.includes(playerId)) {
       alert('You can only select maximum 5 players!');
       return;
     }
 
-    // Toggle selection
     if (mySelections.includes(playerId)) {
       // Deselect
-      await supabase
+      const { error } = await supabase
         .from('round2_selections')
         .delete()
         .eq('auction_id', auctionId)
         .eq('manager_id', currentUser.manager_id)
         .eq('player_id', playerId);
 
-      console.log('✅ Player deselected');
+      if (error) {
+        console.error('Error deselecting player:', error);
+        alert('Error deselecting player. Please try again.');
+        return;
+      }
     } else {
       // Select
       const { error } = await supabase
@@ -207,22 +241,27 @@ setUnsoldPlayers(filteredPlayers);
           auction_id: auctionId,
           manager_id: currentUser.manager_id,
           player_id: playerId,
+          // FIX: Do NOT pass participant_id — the trigger sets it automatically.
+          // The trigger will throw a clear DB error if manager is not a participant,
+          // which we've already guarded against above with the participation check.
         });
 
       if (error) {
         if (error.code === '23505') {
           alert('This player was just selected by another manager! Choose a different player.');
+        } else if (error.message?.includes('not a participant')) {
+          // FIX: Catch the trigger's explicit exception and show a friendly message
+          alert('You are not registered as a participant in this auction. Please contact the admin.');
         } else {
           console.error('Error selecting player:', error);
           alert('Error selecting player. Please try again.');
         }
         return;
       }
-
-      console.log('✅ Player selected');
     }
 
-    await loadSelections();
+    // FIX: Pass current values directly — don't rely on state
+    await loadSelections(auctionId, currentUser);
   };
 
   const filteredPlayers = unsoldPlayers.filter(player =>
@@ -232,14 +271,57 @@ setUnsoldPlayers(filteredPlayers);
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         minHeight: '100vh',
         background: '#F8F8FC'
       }}>
         <p>Loading...</p>
+      </div>
+    );
+  }
+
+  // FIX: Show clear message if manager is not a participant instead of generic error
+  if (notParticipant) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #02084b 0%, #3E5B99 100%)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px',
+      }}>
+        <div style={{
+          background: 'white',
+          padding: '40px',
+          borderRadius: '16px',
+          maxWidth: '480px',
+          textAlign: 'center',
+        }}>
+          <div style={{ fontSize: '56px', marginBottom: '16px' }}>⚠️</div>
+          <h2 style={{ color: '#02084b', marginBottom: '12px' }}>Not a Participant</h2>
+          <p style={{ color: '#666', marginBottom: '24px' }}>
+            You are not registered as a participant in this auction.
+            Please contact the admin to be added.
+          </p>
+          <button
+            onClick={() => router.push('/home')}
+            style={{
+              padding: '12px 28px',
+              background: '#02084b',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: '600',
+            }}
+          >
+            ← Back to Home
+          </button>
+        </div>
       </div>
     );
   }
@@ -357,10 +439,10 @@ setUnsoldPlayers(filteredPlayers);
                 }}
                 style={{
                   padding: '15px',
-                  background: isMySelection 
-                    ? '#d4edda' 
-                    : otherSelection 
-                    ? '#f8d7da' 
+                  background: isMySelection
+                    ? '#d4edda'
+                    : otherSelection
+                    ? '#f8d7da'
                     : '#f8f9fa',
                   border: isMySelection
                     ? '2px solid #28a745'
@@ -373,7 +455,6 @@ setUnsoldPlayers(filteredPlayers);
                   opacity: otherSelection ? 0.6 : 1,
                 }}
               >
-                {/* Player Name */}
                 <h3 style={{
                   fontSize: '16px',
                   color: '#02084b',
@@ -387,63 +468,36 @@ setUnsoldPlayers(filteredPlayers);
                   {otherSelection && <span style={{ fontSize: '20px' }}>🔒</span>}
                 </h3>
 
-                {/* Player Details */}
                 <div style={{ fontSize: '12px', color: '#666' }}>
-                  <p style={{ margin: '3px 0' }}>
-                    <strong>Country:</strong> {player.country}
-                  </p>
-                  <p style={{ margin: '3px 0' }}>
-                    <strong>Role:</strong> {player.role}
-                  </p>
-                  <p style={{ margin: '3px 0' }}>
-                    <strong>Class:</strong> {player.class_band}
-                  </p>
-                  <p style={{ margin: '3px 0' }}>
-                    <strong>Round 2 Price:</strong> 0 pts (FREE)
-                  </p>
+                  <p style={{ margin: '3px 0' }}><strong>Country:</strong> {player.country}</p>
+                  <p style={{ margin: '3px 0' }}><strong>Role:</strong> {player.role}</p>
+                  <p style={{ margin: '3px 0' }}><strong>Class:</strong> {player.class_band}</p>
+                  <p style={{ margin: '3px 0' }}><strong>Round 2 Price:</strong> 0 pts (FREE)</p>
                 </div>
 
-                {/* Status */}
                 {otherSelection && (
                   <div style={{
-                    marginTop: '10px',
-                    padding: '8px',
-                    background: '#dc3545',
-                    color: 'white',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                    textAlign: 'center',
-                    fontWeight: 'bold',
+                    marginTop: '10px', padding: '8px', background: '#dc3545',
+                    color: 'white', borderRadius: '4px', fontSize: '11px',
+                    textAlign: 'center', fontWeight: 'bold',
                   }}>
                     Selected by {otherSelection.manager_name}
                   </div>
                 )}
-
                 {isMySelection && (
                   <div style={{
-                    marginTop: '10px',
-                    padding: '8px',
-                    background: '#28a745',
-                    color: 'white',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                    textAlign: 'center',
-                    fontWeight: 'bold',
+                    marginTop: '10px', padding: '8px', background: '#28a745',
+                    color: 'white', borderRadius: '4px', fontSize: '11px',
+                    textAlign: 'center', fontWeight: 'bold',
                   }}>
                     Click to deselect
                   </div>
                 )}
-
                 {!isMySelection && !otherSelection && (
                   <div style={{
-                    marginTop: '10px',
-                    padding: '8px',
-                    background: '#02084b',
-                    color: 'white',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                    textAlign: 'center',
-                    fontWeight: 'bold',
+                    marginTop: '10px', padding: '8px', background: '#02084b',
+                    color: 'white', borderRadius: '4px', fontSize: '11px',
+                    textAlign: 'center', fontWeight: 'bold',
                   }}>
                     Click to select
                   </div>
@@ -454,23 +508,14 @@ setUnsoldPlayers(filteredPlayers);
         </div>
 
         {filteredPlayers.length === 0 && (
-          <div style={{
-            textAlign: 'center',
-            padding: '40px',
-            color: '#666',
-          }}>
+          <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
             <p style={{ fontSize: '16px' }}>No players found matching "{searchText}"</p>
           </div>
         )}
 
-        {/* Footer */}
         <div style={{
-          textAlign: 'center',
-          paddingTop: '20px',
-          marginTop: '20px',
-          borderTop: '1px solid #eee',
-          color: '#999',
-          fontSize: '12px',
+          textAlign: 'center', paddingTop: '20px', marginTop: '20px',
+          borderTop: '1px solid #eee', color: '#999', fontSize: '12px',
         }}>
           Powered by <strong style={{ color: '#02084b' }}>NB Blue Studios</strong>
         </div>

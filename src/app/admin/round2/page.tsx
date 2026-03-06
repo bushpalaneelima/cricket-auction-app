@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 
@@ -36,6 +36,18 @@ export default function AdminRound2Page() {
   const [unsoldPlayers, setUnsoldPlayers] = useState<Player[]>([]);
   const [totalSelected, setTotalSelected] = useState(0);
 
+  // FIX: Refs so subscription callback always has current values
+  const auctionIdRef = useRef<number | null>(null);
+  const currentUserRef = useRef<Manager | null>(null);
+
+  useEffect(() => {
+    auctionIdRef.current = auctionId;
+  }, [auctionId]);
+
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
   useEffect(() => {
     checkAuth();
   }, []);
@@ -44,13 +56,18 @@ export default function AdminRound2Page() {
     if (!auctionId) return;
 
     const channel = supabase
-      .channel('admin-round2-selections')
+      .channel(`admin-round2-selections-${auctionId}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'round2_selections',
       }, () => {
-        loadSelections();
+        // FIX: Read from refs — not state — so callback is never stale
+        const aid = auctionIdRef.current;
+        const user = currentUserRef.current;
+        if (aid && user) {
+          loadSelections(aid, user);
+        }
       })
       .subscribe();
 
@@ -61,7 +78,7 @@ export default function AdminRound2Page() {
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (!session) {
       router.push('/login');
       return;
@@ -80,16 +97,20 @@ export default function AdminRound2Page() {
     }
 
     setCurrentUser(mgr);
+    currentUserRef.current = mgr;
     await loadRound2Data(mgr);
     setLoading(false);
   };
 
-const loadRound2Data = async (manager?: Manager) => {
-  const userToUse = manager || currentUser;
+  const loadRound2Data = async (manager?: Manager) => {
+    const userToUse = manager || currentUser;
+
+    // FIX: Accept both 'completed' (selection phase) and 'round2' (auction started)
+    // Previously hardcoded to 'completed' only — broke after admin clicked Start Round 2
     const { data: auction } = await supabase
       .from('auctions')
       .select('*')
-      .eq('status', 'completed')
+      .in('status', ['completed', 'round2'])
       .order('scheduled_at', { ascending: false })
       .limit(1)
       .single();
@@ -101,67 +122,62 @@ const loadRound2Data = async (manager?: Manager) => {
     }
 
     setAuctionId(auction.auction_id);
+    auctionIdRef.current = auction.auction_id;
 
-// Load unsold players filtered by tournament
-const { data: unsold } = await supabase
-  .from('unsold_players')
-  .select('player_id')
-  .eq('auction_id', auction.auction_id);
+    // Load unsold players filtered by tournament
+    const { data: unsold } = await supabase
+      .from('unsold_players')
+      .select('player_id')
+      .eq('auction_id', auction.auction_id);
 
-if (unsold && unsold.length > 0) {
-  const unsoldIds = unsold.map(u => u.player_id);
-  
-  const { data: allPlayers } = await supabase
-    .from('players')
-    .select('*')
-    .in('player_id', unsoldIds);
-  
-  // Filter by tournament in JavaScript
-  let filteredPlayers = allPlayers || [];
-  
-  if (auction.tournament_filter && allPlayers) {
-    filteredPlayers = allPlayers.filter(player => {
-      const filterColumn = auction.tournament_filter as keyof typeof player;
-      return player[filterColumn] === true;
-    });
-  }
-  
-  setUnsoldPlayers(filteredPlayers);
-}
+    if (unsold && unsold.length > 0) {
+      const unsoldIds = unsold.map(u => u.player_id);
 
- await loadSelections(auction.auction_id, userToUse ?? undefined);
+      const { data: allPlayers } = await supabase
+        .from('players')
+        .select('*')
+        .in('player_id', unsoldIds);
+
+      let filteredPlayers = allPlayers || [];
+
+      if (auction.tournament_filter && allPlayers) {
+        filteredPlayers = allPlayers.filter(player => {
+          const filterColumn = auction.tournament_filter as keyof typeof player;
+          return player[filterColumn] === true;
+        });
+      }
+
+      setUnsoldPlayers(filteredPlayers);
+    }
+
+    // FIX: Pass both arguments explicitly — no reliance on state
+    await loadSelections(auction.auction_id, userToUse ?? undefined);
   };
 
-const loadSelections = async (currentAuctionId?: number, manager?: Manager) => {
-  const auctionIdToUse = currentAuctionId || auctionId;
-  const userToUse = manager || currentUser;
-  
-  if (!auctionIdToUse || !userToUse) return;
+  // FIX: Both parameters are required — eliminates all stale-state fallbacks
+  const loadSelections = async (currentAuctionId: number, manager?: Manager) => {
+    if (!currentAuctionId || !manager) return;
 
-  // ✅ Get managers who are participants in this auction
-const { data: participants } = await supabase
-  .from('auction_participants')
-  .select(`
-    participant_id,
-    manager_id,
-    managers (
-      manager_id,
-      manager_name,
-      email
-    )
-  `)
-  .eq('auction_id', auctionIdToUse)
-  
-  .order('managers(manager_name)');
+    const { data: participants } = await supabase
+      .from('auction_participants')
+      .select(`
+        participant_id,
+        manager_id,
+        managers (
+          manager_id,
+          manager_name,
+          email
+        )
+      `)
+      .eq('auction_id', currentAuctionId)
+      .order('managers(manager_name)');
 
-if (!participants) return;
-  // Get all selections
-  const { data: allSelections } = await supabase
-    .from('round2_selections')
-    .select('manager_id, player_id')
-    .eq('auction_id', auctionIdToUse);
+    if (!participants) return;
 
-  // ... rest of the function stays the same
+    const { data: allSelections } = await supabase
+      .from('round2_selections')
+      .select('manager_id, player_id')
+      .eq('auction_id', currentAuctionId);
 
     const selectionMap = new Map<number, number[]>();
     (allSelections || []).forEach(s => {
@@ -169,19 +185,16 @@ if (!participants) return;
       selectionMap.set(s.manager_id, [...existing, s.player_id]);
     });
 
-    // Get player details for all selected players
     const allPlayerIds = Array.from(selectionMap.values()).flat();
-    const { data: players } = await supabase
-      .from('players')
-      .select('*')
-      .in('player_id', allPlayerIds);
+    const { data: players } = allPlayerIds.length > 0
+      ? await supabase.from('players').select('*').in('player_id', allPlayerIds)
+      : { data: [] };
 
     const playerMap = new Map(players?.map(p => [p.player_id, p]) || []);
 
-    // Build selections data
     const selectionsData: Selection[] = participants.map(p => {
-    const mgr = Array.isArray(p.managers) ? p.managers[0] : p.managers;
-    const playerIds = selectionMap.get(mgr.manager_id) || [];
+      const mgr = Array.isArray(p.managers) ? p.managers[0] : p.managers;
+      const playerIds = selectionMap.get(mgr.manager_id) || [];
       const playerDetails = playerIds
         .map(id => playerMap.get(id))
         .filter(p => p !== undefined) as Player[];
@@ -206,7 +219,6 @@ if (!participants) return;
       'Managers will be able to select 5 players each from unsold list.\n\n' +
       'Continue?'
     );
-
     if (!confirmed) return;
 
     await supabase
@@ -242,16 +254,16 @@ if (!participants) return;
       `These players will be auctioned in RANDOM order at 0 pts base price.\n\n` +
       `Continue?`
     );
-
     if (!confirmed) return;
 
     try {
-      // Close selection
       await supabase
         .from('auctions')
         .update({
           round2_selection_open: false,
           round2_started: true,
+          // FIX: Set status to 'round2' — the auction page already handles this status.
+          // Admin page now also queries for 'round2' so it won't lose the auction.
           status: 'round2',
         })
         .eq('auction_id', auctionId);
@@ -266,10 +278,10 @@ if (!participants) return;
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         minHeight: '100vh',
         background: '#F8F8FC'
       }}>
@@ -279,28 +291,15 @@ if (!participants) return;
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#F8F8FC',
-      padding: '20px',
-    }}>
-      <div style={{
-        maxWidth: '1400px',
-        margin: '0 auto',
-      }}>
+    <div style={{ minHeight: '100vh', background: '#F8F8FC', padding: '20px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+
         {/* Header */}
         <div style={{
-          background: 'white',
-          padding: '25px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          marginBottom: '20px',
+          background: 'white', padding: '25px', borderRadius: '12px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)', marginBottom: '20px',
         }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h1 style={{ fontSize: '28px', color: '#02084b', marginBottom: '5px' }}>
                 🎯 Round 2 Admin Control
@@ -312,14 +311,9 @@ if (!participants) return;
             <button
               onClick={() => router.push('/home')}
               style={{
-                padding: '10px 20px',
-                background: 'white',
-                color: '#02084b',
-                border: '2px solid #02084b',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
+                padding: '10px 20px', background: 'white', color: '#02084b',
+                border: '2px solid #02084b', borderRadius: '6px', cursor: 'pointer',
+                fontSize: '14px', fontWeight: '600',
               }}
             >
               ← Back to Home
@@ -329,92 +323,51 @@ if (!participants) return;
 
         {/* Stats */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '15px',
-          marginBottom: '20px',
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '15px', marginBottom: '20px',
         }}>
-          <div style={{
-            background: 'white',
-            padding: '20px',
-            borderRadius: '12px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-            textAlign: 'center',
-          }}>
-            <p style={{ color: '#666', fontSize: '12px', marginBottom: '5px' }}>Total Unsold Players</p>
-            <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#02084b', margin: 0 }}>
-              {unsoldPlayers.length}
-            </p>
-          </div>
-
-          <div style={{
-            background: 'white',
-            padding: '20px',
-            borderRadius: '12px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-            textAlign: 'center',
-          }}>
-            <p style={{ color: '#666', fontSize: '12px', marginBottom: '5px' }}>Players Selected</p>
-            <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#28a745', margin: 0 }}>
-              {totalSelected}
-            </p>
-          </div>
-
-          <div style={{
-            background: 'white',
-            padding: '20px',
-            borderRadius: '12px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-            textAlign: 'center',
-          }}>
-            <p style={{ color: '#666', fontSize: '12px', marginBottom: '5px' }}>Managers</p>
-            <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#02084b', margin: 0 }}>
-              {selections.length}
-            </p>
-          </div>
+          {[
+            { label: 'Total Unsold Players', value: unsoldPlayers.length, color: '#02084b' },
+            { label: 'Players Selected', value: totalSelected, color: '#28a745' },
+            { label: 'Managers', value: selections.length, color: '#02084b' },
+          ].map(stat => (
+            <div key={stat.label} style={{
+              background: 'white', padding: '20px', borderRadius: '12px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.1)', textAlign: 'center',
+            }}>
+              <p style={{ color: '#666', fontSize: '12px', marginBottom: '5px' }}>{stat.label}</p>
+              <p style={{ fontSize: '32px', fontWeight: 'bold', color: stat.color, margin: 0 }}>
+                {stat.value}
+              </p>
+            </div>
+          ))}
         </div>
 
         {/* Actions */}
         <div style={{
-          background: 'white',
-          padding: '20px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          marginBottom: '20px',
-          textAlign: 'center',
+          background: 'white', padding: '20px', borderRadius: '12px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)', marginBottom: '20px', textAlign: 'center',
         }}>
           <h2 style={{ fontSize: '18px', color: '#02084b', marginBottom: '15px' }}>
             Admin Actions
           </h2>
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
               onClick={() => window.open('/round2/select', '_blank')}
               style={{
-              padding: '12px 30px',
-              background: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '600',
-             }}
-  >
-             🎯 Select My Players
+                padding: '12px 30px', background: '#007bff', color: 'white',
+                border: 'none', borderRadius: '6px', cursor: 'pointer',
+                fontSize: '14px', fontWeight: '600',
+              }}
+            >
+              🎯 Select My Players
             </button>
-            
             <button
               onClick={handleOpenSelection}
               style={{
-                padding: '12px 30px',
-                background: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
+                padding: '12px 30px', background: '#28a745', color: 'white',
+                border: 'none', borderRadius: '6px', cursor: 'pointer',
+                fontSize: '14px', fontWeight: '600',
               }}
             >
               🔓 Open Selection
@@ -422,14 +375,9 @@ if (!participants) return;
             <button
               onClick={handleCloseSelection}
               style={{
-                padding: '12px 30px',
-                background: '#ffc107',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
+                padding: '12px 30px', background: '#ffc107', color: 'white',
+                border: 'none', borderRadius: '6px', cursor: 'pointer',
+                fontSize: '14px', fontWeight: '600',
               }}
             >
               🔒 Close Selection
@@ -440,12 +388,9 @@ if (!participants) return;
               style={{
                 padding: '12px 30px',
                 background: totalSelected === 0 ? '#ccc' : '#02084b',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
+                color: 'white', border: 'none', borderRadius: '6px',
                 cursor: totalSelected === 0 ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
+                fontSize: '14px', fontWeight: '600',
               }}
             >
               🚀 Start Round 2 Auction
@@ -455,50 +400,36 @@ if (!participants) return;
 
         {/* Manager Selections */}
         <div style={{
-          background: 'white',
-          padding: '25px',
-          borderRadius: '12px',
+          background: 'white', padding: '25px', borderRadius: '12px',
           boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
         }}>
           <h2 style={{ fontSize: '20px', color: '#02084b', marginBottom: '20px' }}>
             Manager Selections
           </h2>
-
           <div style={{ display: 'grid', gap: '15px' }}>
             {selections.map(selection => (
               <div
                 key={selection.manager_id}
                 style={{
-                  padding: '15px',
-                  background: '#f8f9fa',
-                  borderRadius: '8px',
-                  border: selection.player_count === 5 
-                    ? '2px solid #28a745' 
+                  padding: '15px', background: '#f8f9fa', borderRadius: '8px',
+                  border: selection.player_count === 5
+                    ? '2px solid #28a745'
                     : selection.player_count === 0
                     ? '2px solid #dc3545'
                     : '2px solid #ffc107',
                 }}
               >
                 <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '10px',
+                  display: 'flex', justifyContent: 'space-between',
+                  alignItems: 'center', marginBottom: '10px',
                 }}>
                   <h3 style={{ fontSize: '16px', color: '#02084b', margin: 0 }}>
                     {selection.manager_name}
                   </h3>
                   <span style={{
                     padding: '4px 12px',
-                    background: selection.player_count === 5 
-                      ? '#28a745' 
-                      : selection.player_count === 0
-                      ? '#dc3545'
-                      : '#ffc107',
-                    color: 'white',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
+                    background: selection.player_count === 5 ? '#28a745' : selection.player_count === 0 ? '#dc3545' : '#ffc107',
+                    color: 'white', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold',
                   }}>
                     {selection.player_count} / 5 selected
                   </span>
@@ -511,15 +442,9 @@ if (!participants) return;
                     gap: '8px',
                   }}>
                     {selection.players.map(player => (
-                      <div
-                        key={player.player_id}
-                        style={{
-                          padding: '8px',
-                          background: 'white',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                        }}
-                      >
+                      <div key={player.player_id} style={{
+                        padding: '8px', background: 'white', borderRadius: '4px', fontSize: '12px',
+                      }}>
                         <p style={{ fontWeight: 'bold', color: '#02084b', margin: '0 0 3px 0' }}>
                           {player.player_name}
                         </p>
@@ -539,12 +464,8 @@ if (!participants) return;
           </div>
         </div>
 
-        {/* Footer */}
         <div style={{
-          textAlign: 'center',
-          paddingTop: '20px',
-          color: '#999',
-          fontSize: '12px',
+          textAlign: 'center', paddingTop: '20px', color: '#999', fontSize: '12px',
         }}>
           Powered by <strong style={{ color: '#02084b' }}>NB Blue Studios</strong>
         </div>

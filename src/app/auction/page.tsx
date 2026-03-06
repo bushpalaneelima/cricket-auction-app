@@ -149,6 +149,12 @@ function AuctionPageContent() {
         // Replace entire auction state from DB — single source of truth
         setAuctionState(newAuction);
 
+        // FIX: Reset waiting screen when Round 2 starts
+        if (newAuction.status === 'round2') {
+          setRound1Complete(false);
+        }
+
+
         // Update current bidder display
         if (newAuction.current_bid_participant_id) {
           const { data } = await supabase
@@ -354,6 +360,11 @@ function AuctionPageContent() {
       await loadPlayerStats(auction);
       return auction;
     }
+
+    // FIX: If page loads when Round 2 already started, don't show waiting screen
+      if (auction.status === 'round2') {
+        setRound1Complete(false);
+      }
 
     if (auction.current_player_id) {
       const { data: player } = await supabase
