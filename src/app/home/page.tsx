@@ -63,9 +63,34 @@ export default function HomePage() {
     router.push('/login');
   };
 
-  const joinLobby = () => {
+  const joinLobby = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+
+  // Find the auction this manager is a participant in
+  const { data: mgr } = await supabase
+    .from('managers')
+    .select('manager_id')
+    .eq('email', session.user.email)
+    .single();
+
+  if (!mgr) return;
+
+  const { data: participation } = await supabase
+    .from('auction_participants')
+    .select('auction_id, auctions(status)')
+    .eq('manager_id', mgr.manager_id)
+    .in('auctions.status', ['active', 'round1', 'round2'])
+    .order('auction_id', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (participation?.auction_id) {
+    router.push(`/lobby?id=${participation.auction_id}`);
+  } else {
     router.push('/lobby');
-  };
+  }
+};
 
   const goToSetup = () => {
     router.push('/admin/setup');

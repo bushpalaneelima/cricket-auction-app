@@ -85,7 +85,19 @@ export default function LobbyPage() {
     setLoading(false);
   };
 
-  const checkActiveAuction = async () => {
+const checkActiveAuction = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+
+  const { data: mgr } = await supabase
+    .from('managers')
+    .select('manager_id, role')
+    .eq('email', session.user.email)
+    .single();
+
+  if (!mgr) return;
+
+  if (mgr.role === 'admin') {
     const { data } = await supabase
       .from('auctions')
       .select('*')
@@ -93,10 +105,18 @@ export default function LobbyPage() {
       .order('scheduled_at', { ascending: false })
       .limit(1)
       .single();
-
     setActiveAuction(data);
-  };
-
+  } else {
+    const { data: participation } = await supabase
+      .from('auction_participants')
+      .select('auction_id, auctions(*)')
+      .eq('manager_id', mgr.manager_id)
+      .order('auction_id', { ascending: false })
+      .limit(1)
+      .single();
+    setActiveAuction((participation?.auctions as any) || null);
+  }
+};
   const checkAccess = async () => {
     if (!currentUserEmail || !activeAuction) return;
 
@@ -164,18 +184,17 @@ export default function LobbyPage() {
     router.push('/login');
   };
 
-  const startAuction = async () => {
-  if (!activeAuction) return;
-  
-  // Update auction status to 'active'
-  await supabase
-    .from('auctions')
-    .update({ status: 'active' })
-    .eq('auction_id', activeAuction.auction_id);
-  
-  // Redirect to auction page
-  router.push('/auction');
-};
+    const startAuction = async () => {
+    if (!activeAuction) return;
+    
+    await supabase
+      .from('auctions')
+      .update({ status: 'active' })
+      .eq('auction_id', activeAuction.auction_id);
+    
+    router.push(`/auction?id=${activeAuction.auction_id}`);
+  };
+
   if (loading) {
     return (
       <div style={{ 
@@ -421,7 +440,7 @@ export default function LobbyPage() {
 
           {activeAuction.status !== 'draft' && (
             <button
-              onClick={() => router.push('/auction')}
+              onClick={() => router.push(`/auction?id=${activeAuction.auction_id}`)}
               style={{
                 padding: '10px 30px',
                 fontSize: '14px',
