@@ -49,13 +49,13 @@ export default function HomePage() {
   };
 
   const checkAuctionStatus = async () => {
-   const { data } = await supabase
-     .from('auctions')
-     .select('status')
-     .in('status', ['draft', 'active', 'round1', 'round2'])
-     .limit(1);
+    const { data } = await supabase
+      .from('auctions')
+      .select('status')
+      .in('status', ['draft', 'active', 'round1', 'round2'])
+      .limit(1);
 
-   setAuctionActive(Boolean(data && data.length > 0));
+    setAuctionActive(Boolean(data && data.length > 0));
   };
 
   const handleLogout = async () => {
@@ -63,34 +63,55 @@ export default function HomePage() {
     router.push('/login');
   };
 
+  // FIX: Proper joinLobby — fetch participant's auctions separately, 
+  // then filter by status in JS to avoid broken Supabase joined-table filter
   const joinLobby = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
 
-  // Find the auction this manager is a participant in
-  const { data: mgr } = await supabase
-    .from('managers')
-    .select('manager_id')
-    .eq('email', session.user.email)
-    .single();
+    const { data: mgr } = await supabase
+      .from('managers')
+      .select('manager_id, role')
+      .eq('email', session.user.email)
+      .single();
 
-  if (!mgr) return;
+    if (!mgr) return;
 
-  const { data: participation } = await supabase
-    .from('auction_participants')
-    .select('auction_id, auctions(status)')
-    .eq('manager_id', mgr.manager_id)
-    .in('auctions.status', ['active', 'round1', 'round2'])
-    .order('auction_id', { ascending: false })
-    .limit(1)
-    .single();
+    if (mgr.role === 'admin') {
+      // Admin: go directly to lobby — lobby.tsx handles admin view
+      router.push('/lobby');
+      return;
+    }
 
-  if (participation?.auction_id) {
-    router.push(`/lobby?id=${participation.auction_id}`);
-  } else {
-    router.push('/lobby');
-  }
-};
+    // Regular manager: find their auction participations
+    const { data: participations } = await supabase
+      .from('auction_participants')
+      .select('auction_id')
+      .eq('manager_id', mgr.manager_id)
+      .order('auction_id', { ascending: false });
+
+    if (!participations || participations.length === 0) {
+      alert('You are not a participant in any auction yet. Ask the admin to add you.');
+      return;
+    }
+
+    const auctionIds = participations.map(p => p.auction_id);
+
+    // Now find which of those auctions is currently active/lobby-state
+    const { data: activeAuctions } = await supabase
+      .from('auctions')
+      .select('auction_id, status')
+      .in('auction_id', auctionIds)
+      .in('status', ['active', 'round1', 'round2', 'draft'])
+      .order('auction_id', { ascending: false })
+      .limit(1);
+
+    if (activeAuctions && activeAuctions.length > 0) {
+      router.push(`/lobby?id=${activeAuctions[0].auction_id}`);
+    } else {
+      alert('No active auction found for your account. Wait for the admin to start one.');
+    }
+  };
 
   const goToSetup = () => {
     router.push('/admin/setup');
