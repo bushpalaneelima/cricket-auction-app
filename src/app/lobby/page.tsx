@@ -85,38 +85,46 @@ export default function LobbyPage() {
     setLoading(false);
   };
 
-const checkActiveAuction = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
+  const checkActiveAuction = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
 
-  const { data: mgr } = await supabase
-    .from('managers')
-    .select('manager_id, role')
-    .eq('email', session.user.email)
-    .single();
-
-  if (!mgr) return;
-
-  if (mgr.role === 'admin') {
-    const { data } = await supabase
-      .from('auctions')
-      .select('*')
-      .in('status', ['draft', 'active', 'round1', 'round2'])
-      .order('scheduled_at', { ascending: false })
-      .limit(1)
+    const { data: mgr } = await supabase
+      .from('managers')
+      .select('manager_id, role')
+      .eq('email', session.user.email)
       .single();
-    setActiveAuction(data);
-  } else {
-    const { data: participation } = await supabase
-      .from('auction_participants')
-      .select('auction_id, auctions(*)')
-      .eq('manager_id', mgr.manager_id)
-      .order('auction_id', { ascending: false })
-      .limit(1)
-      .single();
-    setActiveAuction((participation?.auctions as any) || null);
-  }
-};
+
+    if (!mgr) return;
+
+    if (mgr.role === 'admin') {
+      // ✅ Admin sees draft, active, round1, round2
+      const { data } = await supabase
+        .from('auctions')
+        .select('*')
+        .in('status', ['draft', 'active', 'round1', 'round2'])
+        .order('scheduled_at', { ascending: false })
+        .limit(1)
+        .single();
+      setActiveAuction(data);
+    } else {
+      // ✅ FIXED: Participants ONLY see active/round1/round2 auctions
+      const { data: participation } = await supabase
+        .from('auction_participants')
+        .select(`
+          auction_id,
+          auctions!inner(*)
+        `)
+        .eq('manager_id', mgr.manager_id)
+        .in('auctions.status', ['active', 'round1', 'round2'])
+        .order('auction_id', { ascending: false })
+        .limit(1)
+        .single();
+      
+      setActiveAuction(participation?.auctions || null);
+    }
+  };
+
   const checkAccess = async () => {
     if (!currentUserEmail || !activeAuction) return;
 
@@ -184,13 +192,16 @@ const checkActiveAuction = async () => {
     router.push('/login');
   };
 
-    const startAuction = async () => {
+  const startAuction = async () => {
     if (!activeAuction) return;
     
-    await supabase
-      .from('auctions')
-      .update({ status: 'active' })
-      .eq('auction_id', activeAuction.auction_id);
+    // ✅ Only update status if it's draft (otherwise already active)
+    if (activeAuction.status === 'draft') {
+      await supabase
+        .from('auctions')
+        .update({ status: 'active' })
+        .eq('auction_id', activeAuction.auction_id);
+    }
     
     router.push(`/auction?id=${activeAuction.auction_id}`);
   };
@@ -277,7 +288,7 @@ const checkActiveAuction = async () => {
         }}>
           <div>
             <h1 style={{ fontSize: '24px', color: '#02084b', marginBottom: '3px' }}>
-              🎯 AuctionLab Lobby
+              🎯 Game of Gambits Lobby
             </h1>
             <p style={{ color: '#666', fontSize: '12px' }}>
               {activeAuction.auction_name || 'Auction Lobby'}
@@ -419,7 +430,7 @@ const checkActiveAuction = async () => {
             </button>
           )}
 
-          {access.canControl && activeAuction.status === 'draft' && (
+          {access.canControl && (
             <button
               onClick={startAuction}
               disabled={!allReady}
@@ -435,24 +446,6 @@ const checkActiveAuction = async () => {
               }}
             >
               🎬 Start Auction
-            </button>
-          )}
-
-          {activeAuction.status !== 'draft' && (
-            <button
-              onClick={() => router.push(`/auction?id=${activeAuction.auction_id}`)}
-              style={{
-                padding: '10px 30px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                background: '#2e7d32',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-              }}
-            >
-              🔴 Join Auction
             </button>
           )}
         </div>

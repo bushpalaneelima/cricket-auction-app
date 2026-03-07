@@ -139,7 +139,7 @@ export default function AuctionSetupPage() {
             class_filter: playerClass,
             role_filter: role,
             scheduled_at: new Date().toISOString(),
-            status: 'draft', // ✅ Start as draft, not active
+            status: 'active', // ✅ FIXED: Changed from 'draft' to 'active'
             timer_seconds: 30,
             is_paused: false,
             current_player_id: null,
@@ -175,11 +175,11 @@ export default function AuctionSetupPage() {
         `✅ Auction "${auctionName}" created!\n\n` +
         `Auction ID: ${auction.auction_id}\n` +
         `Participants: ${selectedManagers.length} managers\n` +
-        `Status: Draft (waiting in lobby)\n\n` +
+        `Status: Active (participants can now join lobby)\n\n` +
         `Redirecting to lobby...`
       );
 
-      // ✅ Redirect to lobby (not /auction)
+      // ✅ Redirect to lobby
       router.push('/lobby');
       
     } catch (error) {
