@@ -229,8 +229,13 @@ function AuctionPageContent() {
         schema: 'public',
         table: 'auction_participants',
         filter: `participant_id=eq.${currentParticipant.participant_id}`,
-      }, () => {
-        refreshCurrentParticipant();
+      }, (payload) => {
+        const updated = payload.new as any;
+        setCurrentParticipant(prev => prev ? {
+          ...prev,
+          current_budget: updated.current_budget,
+          starting_budget: updated.starting_budget,
+        } : prev);
       })
       .subscribe();
 
