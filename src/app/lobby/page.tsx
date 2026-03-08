@@ -28,41 +28,49 @@ function LobbyPageContent() {
   const [access, setAccess] = useState<any>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [activeAuction, setActiveAuction] = useState<any>(null);
+  const [auctionId, setAuctionId] = useState<number | null>(null);
 
   useEffect(() => {
     checkAuth();
   }, []);
 
+  // Step 1: once we have auctionId + email, load access and participants
   useEffect(() => {
-    if (activeAuction && currentUserEmail) {
-      checkAccess();
-      loadParticipants();
-
-      const channel = supabase
-        .channel(`lobby-${activeAuction.auction_id}`)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'auction_participants',
-          filter: `auction_id=eq.${activeAuction.auction_id}`
-        }, () => {
-          loadParticipants();
-        })
-        .on('postgres_changes', {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'auctions',
-          filter: `auction_id=eq.${activeAuction.auction_id}`,
-        }, (payload) => {
-          setActiveAuction(payload.new as any);
-        })
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
+    if (auctionId && currentUserEmail) {
+      checkAccess(auctionId, currentUserEmail);
+      loadParticipants(auctionId);
     }
-  }, [activeAuction?.auction_id, currentUserEmail]);
+  }, [auctionId, currentUserEmail]);
+
+  // Step 2: subscribe to real-time changes using stable auctionId
+  useEffect(() => {
+    if (!auctionId) return;
+
+    const channel = supabase
+      .channel(`lobby-${auctionId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'auction_participants',
+        filter: `auction_id=eq.${auctionId}`
+      }, () => {
+        loadParticipants(auctionId);
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'auctions',
+        filter: `auction_id=eq.${auctionId}`,
+      }, (payload) => {
+        setActiveAuction(payload.new as any);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [auctionId]);
+
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     
@@ -71,12 +79,12 @@ function LobbyPageContent() {
       return;
     }
 
-    setCurrentUserEmail(session.user.email || null);
-    await checkActiveAuction(session.user.email || '');
+    const email = session.user.email || '';
+    setCurrentUserEmail(email);
+    await checkActiveAuction(email);
     setLoading(false);
   };
 
-  // FIX: Accept auctionIdParam from URL — used when coming from history page or joinLobby
   const checkActiveAuction = async (email: string) => {
     const { data: mgr } = await supabase
       .from('managers')
@@ -86,22 +94,16 @@ function LobbyPageContent() {
 
     if (!mgr) return;
 
-    // If a specific auction id was passed in the URL, load that auction directly
+    let auction = null;
+
     if (auctionIdParam) {
-      const { data: specificAuction } = await supabase
+      const { data } = await supabase
         .from('auctions')
         .select('*')
         .eq('auction_id', parseInt(auctionIdParam))
         .single();
-
-      if (specificAuction) {
-        setActiveAuction(specificAuction);
-        return;
-      }
-    }
-
-    // Otherwise find the relevant active auction for this user
-    if (mgr.role === 'admin') {
+      auction = data;
+    } else if (mgr.role === 'admin') {
       const { data } = await supabase
         .from('auctions')
         .select('*')
@@ -109,9 +111,8 @@ function LobbyPageContent() {
         .order('scheduled_at', { ascending: false })
         .limit(1)
         .single();
-      setActiveAuction(data || null);
+      auction = data;
     } else {
-      // Get all participations for this manager
       const { data: participations } = await supabase
         .from('auction_participants')
         .select('auction_id')
@@ -124,7 +125,6 @@ function LobbyPageContent() {
       }
 
       const auctionIds = participations.map(p => p.auction_id);
-
       const { data: activeAuctions } = await supabase
         .from('auctions')
         .select('*')
@@ -133,17 +133,17 @@ function LobbyPageContent() {
         .order('auction_id', { ascending: false })
         .limit(1);
 
-      setActiveAuction(activeAuctions?.[0] || null);
+      auction = activeAuctions?.[0] || null;
+    }
+
+    if (auction) {
+      setActiveAuction(auction);
+      setAuctionId(auction.auction_id); // stable ID for subscriptions
     }
   };
 
-  const checkAccess = async () => {
-    if (!currentUserEmail || !activeAuction) return;
-
-    const accessInfo = await getAuctionAccess(
-      currentUserEmail,
-      activeAuction.auction_id
-    );
+  const checkAccess = async (id: number, email: string) => {
+    const accessInfo = await getAuctionAccess(email, id);
 
     if (!accessInfo.canView) {
       alert('You do not have access to this auction.');
@@ -154,9 +154,7 @@ function LobbyPageContent() {
     setAccess(accessInfo);
   };
 
-  const loadParticipants = async () => {
-    if (!activeAuction) return;
-
+  const loadParticipants = async (id: number) => {
     const { data } = await supabase
       .from('auction_participants')
       .select(`
@@ -171,7 +169,7 @@ function LobbyPageContent() {
           role
         )
       `)
-      .eq('auction_id', activeAuction.auction_id)
+      .eq('auction_id', id)
       .order('managers(manager_name)');
 
     if (data) {
@@ -188,14 +186,12 @@ function LobbyPageContent() {
     
     if (!currentParticipant) return;
 
-    const newReadyState = !currentParticipant.is_ready;
-    
     await supabase
       .from('auction_participants')
-      .update({ is_ready: newReadyState })
+      .update({ is_ready: !currentParticipant.is_ready })
       .eq('participant_id', access.participantId);
-    
-    loadParticipants();
+
+    // loadParticipants will be called by real-time subscription
   };
 
   const handleLogout = async () => {
@@ -266,12 +262,22 @@ function LobbyPageContent() {
   }
 
   if (!access) {
-    return <div style={{ padding: '20px', color: 'white', textAlign: 'center' }}>Checking access...</div>;
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #02084b 0%, #3E5B99 100%)',
+        color: 'white'
+      }}>
+        Checking access...
+      </div>
+    );
   }
 
   const readyCount = participants.filter(p => p.is_ready).length;
   const allReady = readyCount === participants.length && participants.length > 0;
-
   const currentParticipant = participants.find(p => p.participant_id === access.participantId);
 
   return (
@@ -373,7 +379,7 @@ function LobbyPageContent() {
           </div>
         </div>
 
-        {/* Status */}
+        {/* Ready Status */}
         <div style={{
           background: '#e3f2fd',
           padding: '12px',
@@ -408,7 +414,6 @@ function LobbyPageContent() {
           }}>
             {participants.map((participant) => {
               const isCurrentUser = participant.managers.email === currentUserEmail;
-              
               return (
                 <div
                   key={participant.participant_id}
@@ -419,9 +424,7 @@ function LobbyPageContent() {
                     padding: '10px',
                     background: isCurrentUser ? '#e3f2fd' : '#f8f9fa',
                     borderRadius: '6px',
-                    border: isCurrentUser 
-                      ? '2px solid #02084b' 
-                      : '1px solid #ddd',
+                    border: isCurrentUser ? '2px solid #02084b' : '1px solid #ddd',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -439,13 +442,9 @@ function LobbyPageContent() {
                   </div>
                   <div>
                     {participant.is_ready ? (
-                      <span style={{ color: '#2e7d32', fontWeight: 'bold', fontSize: '12px' }}>
-                        ✅ Ready
-                      </span>
+                      <span style={{ color: '#2e7d32', fontWeight: 'bold', fontSize: '12px' }}>✅ Ready</span>
                     ) : (
-                      <span style={{ color: '#f57c00', fontSize: '12px' }}>
-                        ⏳ Waiting
-                      </span>
+                      <span style={{ color: '#f57c00', fontSize: '12px' }}>⏳ Waiting</span>
                     )}
                   </div>
                 </div>
@@ -475,7 +474,7 @@ function LobbyPageContent() {
                 cursor: 'pointer',
               }}
             >
-              {currentParticipant?.is_ready ? '❌ Not Ready' : '✅ I\'m Ready'}
+              {currentParticipant?.is_ready ? '❌ Not Ready' : "✅ I'm Ready"}
             </button>
           )}
 
