@@ -369,7 +369,7 @@ export default function HomePage() {
               Past auctions
             </p>
             <button
-              onClick={() => router.push('/admin/history')}
+              onClick={() => router.push('/history')} // Redirect everyone to unified history page
               style={{
                 padding: '8px 16px',
                 background: '#e65100',

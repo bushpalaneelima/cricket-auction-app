@@ -37,16 +37,24 @@ function LobbyPageContent() {
     if (activeAuction && currentUserEmail) {
       checkAccess();
       loadParticipants();
-      
+
       const channel = supabase
-        .channel(`lobby-changes-${activeAuction.auction_id}`)
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
+        .channel(`lobby-${activeAuction.auction_id}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
           table: 'auction_participants',
           filter: `auction_id=eq.${activeAuction.auction_id}`
         }, () => {
           loadParticipants();
+        })
+        .on('postgres_changes', {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'auctions',
+          filter: `auction_id=eq.${activeAuction.auction_id}`,
+        }, (payload) => {
+          setActiveAuction(payload.new as any);
         })
         .subscribe();
 
@@ -54,32 +62,7 @@ function LobbyPageContent() {
         supabase.removeChannel(channel);
       };
     }
-  }, [activeAuction, currentUserEmail]);
-
-  useEffect(() => {
-    // Subscribe to auction status changes so lobby auto-advances when admin starts
-    if (!activeAuction) return;
-
-    const auctionChannel = supabase
-      .channel(`auction-status-${activeAuction?.auction_id}`)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'auctions',
-        filter: `auction_id=eq.${activeAuction.auction_id}`,
-      }, (payload) => {
-        const updated = payload.new as any;
-        setActiveAuction(updated);
-        // If admin pushed auction to active from draft, and user is already in lobby,
-        // they stay in lobby until they click Ready + admin clicks Start
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(auctionChannel);
-    };
-  }, [activeAuction?.auction_id]);
-
+  }, [activeAuction?.auction_id, currentUserEmail]);
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     
