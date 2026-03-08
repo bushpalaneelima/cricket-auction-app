@@ -142,9 +142,13 @@ function LobbyPageContent() {
 
     if (auction) {
       setActiveAuction(auction);
-      setAuctionId(auction.auction_id); // stable ID for subscriptions
-    }
-  };
+      setAuctionId(auction.auction_id); 
+      // If auction already live, go straight to auction page
+  if (['active', 'round1', 'round2'].includes(auction.status)) {
+    router.push(`/auction?id=${auction.auction_id}`);
+    return;
+  }
+}
 
   const checkAccess = async (id: number, email: string) => {
     const accessInfo = await getAuctionAccess(email, id);
