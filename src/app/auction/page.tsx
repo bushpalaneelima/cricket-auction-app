@@ -205,8 +205,10 @@ function AuctionPageContent() {
         // effect only re-subscribes when auction_id changes, not on participant changes
         const participant = currentParticipantRef.current;
         if (participant) {
+          setTimeout(async () => {
           await refreshCurrentParticipant();
           await loadMyTeam(participant.participant_id);
+          }, 2000);
         }
       })
       .subscribe();
