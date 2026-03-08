@@ -57,13 +57,17 @@ function LobbyPageContent() {
         loadParticipants(auctionId);
       })
       .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'auctions',
-        filter: `auction_id=eq.${auctionId}`,
-      }, (payload) => {
-        setActiveAuction(payload.new as any);
-      })
+  event: 'UPDATE',
+  schema: 'public',
+  table: 'auctions',
+  filter: `auction_id=eq.${auctionId}`,
+}, (payload) => {
+  const updated = payload.new as any;
+  setActiveAuction(updated);
+  if (updated.status === 'active' || updated.status === 'round1' || updated.status === 'round2') {
+    router.push(`/auction?id=${updated.auction_id}`);
+  }
+})
       .subscribe();
 
     return () => {
