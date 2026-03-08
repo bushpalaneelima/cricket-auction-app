@@ -30,11 +30,12 @@ function LobbyPageContent() {
   const [activeAuction, setActiveAuction] = useState<any>(null);
   const [auctionId, setAuctionId] = useState<number | null>(null);
 
+  // On mount: check auth
   useEffect(() => {
     checkAuth();
   }, []);
 
-  // Step 1: once we have auctionId + email, load access and participants
+  // When auctionId + email ready: load access and participants
   useEffect(() => {
     if (auctionId && currentUserEmail) {
       checkAccess(auctionId, currentUserEmail);
@@ -42,7 +43,7 @@ function LobbyPageContent() {
     }
   }, [auctionId, currentUserEmail]);
 
-  // Step 2: subscribe to real-time changes using stable auctionId
+  // Real-time subscription
   useEffect(() => {
     if (!auctionId) return;
 
@@ -57,17 +58,17 @@ function LobbyPageContent() {
         loadParticipants(auctionId);
       })
       .on('postgres_changes', {
-  event: 'UPDATE',
-  schema: 'public',
-  table: 'auctions',
-  filter: `auction_id=eq.${auctionId}`,
-}, (payload) => {
-  const updated = payload.new as any;
-  setActiveAuction(updated);
-  if (updated.status === 'active' || updated.status === 'round1' || updated.status === 'round2') {
-    router.push(`/auction?id=${updated.auction_id}`);
-  }
-})
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'auctions',
+        filter: `auction_id=eq.${auctionId}`,
+      }, (payload) => {
+        const updated = payload.new as any;
+        setActiveAuction(updated);
+        if (['active', 'round1', 'round2'].includes(updated.status)) {
+          router.push(`/auction?id=${updated.auction_id}`);
+        }
+      })
       .subscribe();
 
     return () => {
@@ -75,9 +76,16 @@ function LobbyPageContent() {
     };
   }, [auctionId]);
 
+  // Redirect immediately if auction is already live when lobby loads
+  useEffect(() => {
+    if (activeAuction && ['active', 'round1', 'round2'].includes(activeAuction.status)) {
+      router.push(`/auction?id=${activeAuction.auction_id}`);
+    }
+  }, [activeAuction]);
+
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (!session) {
       router.push('/login');
       return;
@@ -142,13 +150,9 @@ function LobbyPageContent() {
 
     if (auction) {
       setActiveAuction(auction);
-      setAuctionId(auction.auction_id); 
-      // If auction already live, go straight to auction page
-  if (['active', 'round1', 'round2'].includes(auction.status)) {
-    router.push(`/auction?id=${auction.auction_id}`);
-    return;
-  }
-}
+      setAuctionId(auction.auction_id);
+    }
+  };
 
   const checkAccess = async (id: number, email: string) => {
     const accessInfo = await getAuctionAccess(email, id);
@@ -187,19 +191,17 @@ function LobbyPageContent() {
 
   const toggleReady = async () => {
     if (!access?.participantId) return;
-    
+
     const currentParticipant = participants.find(
       p => p.participant_id === access.participantId
     );
-    
+
     if (!currentParticipant) return;
 
     await supabase
       .from('auction_participants')
       .update({ is_ready: !currentParticipant.is_ready })
       .eq('participant_id', access.participantId);
-
-    // loadParticipants will be called by real-time subscription
   };
 
   const handleLogout = async () => {
@@ -209,23 +211,23 @@ function LobbyPageContent() {
 
   const startAuction = async () => {
     if (!activeAuction) return;
-    
+
     if (activeAuction.status === 'draft') {
       await supabase
         .from('auctions')
         .update({ status: 'active' })
         .eq('auction_id', activeAuction.auction_id);
     }
-    
+
     router.push(`/auction?id=${activeAuction.auction_id}`);
   };
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         minHeight: '100vh',
         background: '#F8F8FC'
       }}>
@@ -236,11 +238,11 @@ function LobbyPageContent() {
 
   if (!activeAuction) {
     return (
-      <div style={{ 
-        display: 'flex', 
+      <div style={{
+        display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center', 
-        alignItems: 'center', 
+        justifyContent: 'center',
+        alignItems: 'center',
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #02084b 0%, #3E5B99 100%)',
         color: 'white',
@@ -271,10 +273,10 @@ function LobbyPageContent() {
 
   if (!access) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #02084b 0%, #3E5B99 100%)',
         color: 'white'
