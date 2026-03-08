@@ -882,11 +882,10 @@ function AuctionPageContent() {
           return;
         }
 
-        const newBudget = participant.current_budget - latestAuction.current_bid_amount;
-        const { error: budgetErr } = await supabase
-          .from('auction_participants')
-          .update({ current_budget: newBudget })
-          .eq('participant_id', latestAuction.current_bid_participant_id);
+        const { error: budgetErr } = await supabase.rpc('deduct_budget', {
+          p_participant_id: latestAuction.current_bid_participant_id,
+          p_amount: latestAuction.current_bid_amount
+        });
 
         if (budgetErr) {
           console.error('Budget update failed:', budgetErr);
