@@ -240,12 +240,13 @@ function AuctionPageContent() {
   }, [currentParticipant?.participant_id]);
 
   const refreshCurrentParticipant = async () => {
-    if (!currentParticipant) return;
+    const participant = currentParticipantRef.current;
+    if (!participant) return;
     try {
       const { data: updatedParticipant, error } = await supabase
         .from('auction_participants')
         .select('participant_id, manager_id, current_budget, starting_budget')
-        .eq('participant_id', currentParticipant.participant_id)
+        .eq('participant_id', participant.participant_id)
         .single();
 
       if (error) {
@@ -256,7 +257,7 @@ function AuctionPageContent() {
       if (updatedParticipant) {
         setCurrentParticipant({
           ...updatedParticipant,
-          managers: currentParticipant.managers,
+          managers: participant.managers,
         } as any);
       }
     } catch (err) {
